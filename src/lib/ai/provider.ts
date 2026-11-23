@@ -4,6 +4,7 @@
 import { UserFacingError } from "@/lib/errors";
 import type { ProcessedImage } from "@/lib/images/preprocess";
 import type { ModelId } from "./models";
+import type { PromptId } from "./prompt";
 import type { KnownMeasurement } from "./schema";
 import type { AnalysisIssue, AnalysisMeta, NormalizedOutput, PhotoInfo, RoomAnalysis } from "./schema";
 
@@ -12,6 +13,8 @@ export interface AnalyzeOptions {
   knownMeasurement?: KnownMeasurement;
   /** Override the model (e.g. Haiku for Phase 4 comparisons). Defaults to env / config. */
   model?: ModelId;
+  /** Which registered prompt version to use (default: DEFAULT_PROMPT_ID). Used by the eval. */
+  promptId?: PromptId;
 }
 
 export interface RoomAnalyzer {
@@ -19,7 +22,10 @@ export interface RoomAnalyzer {
 }
 
 /** AI failures. `userMessage` is safe for the client; `message` holds log detail. */
-export class AnalysisError extends UserFacingError {}
+export class AnalysisError extends UserFacingError {
+  /** What the failed analysis had already spent (API calls that were billed), if any. */
+  spend?: { inputTokens: number; outputTokens: number; estimatedCostUsd: number };
+}
 
 /** Deterministic issues from OUR code (not the model): photos taken with the ultra-wide lens. */
 export function lensIssues(images: ProcessedImage[]): AnalysisIssue[] {

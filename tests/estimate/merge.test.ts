@@ -20,6 +20,7 @@ function analysis(
     photos: [],
     meta: {
       model: "claude-sonnet-5-5",
+      promptId: "v2",
       promptVersion: "test",
       knownMeasurement,
       inputTokens: 0,
@@ -171,7 +172,7 @@ describe("row 6: both walls measured", () => {
     expect(e.closetAreaSqft).toEqual({ low: 8, likely: 10, high: 15 });
     expect(e.result.areaSqft.likely).toBeCloseTo(12.47 * 9.02 + 10 - 8, 10);
     expect(e.confidence).toBe("measured");
-    expect(e.confidenceReason).toMatch(/Closets and built-ins are estimated/);
+    expect(e.confidenceReason).toMatch(/Closets and built-ins marked estimated come from the photos/);
     expect(e.reanalyzeWith).toBeNull();
   });
 
@@ -246,7 +247,7 @@ describe("areas, warnings and ranges", () => {
     expect(e.closetAreaSqft?.likely).toBe(10 + 36);
     expect(e.otherAreaSqft?.likely).toBe(9);
     expect(e.obstacleAreaSqft?.likely).toBe(18);
-    expect(e.obstacleLabels).toEqual(["island"]);
+    expect(e.items.filter((i) => i.kind === "obstacle").map((i) => i.label)).toEqual(["Island"]);
     expect(e.result.areaSqft.likely).toBe(120 + 46 + 9 - 18);
   });
 

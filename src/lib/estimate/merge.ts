@@ -41,12 +41,13 @@ export interface Estimate {
   /** Main room as longer × shorter. null when the main room isn't one rectangle (AI L-shape/irregular). */
   main: { longer: MainDimension; shorter: MainDimension } | null;
   mainAreaSqft: ResultRange;
-  /** Closet floor area from the AI (always estimated), or null if none. */
+  /** Closets, extra areas and built-ins (AI-detected, edited, or added by hand), incl. removed ones. */
+  items: AreaItem[];
+  /** Sums over non-removed items; null if there are none of that kind. */
   closetAreaSqft: ResultRange | null;
   closetCount: number;
   otherAreaSqft: ResultRange | null;
   obstacleAreaSqft: ResultRange | null;
-  obstacleLabels: string[];
   /** The calculator's result: area, sq ft with waste, boxes, cost (each low/likely/high). */
   result: RoomResult;
   confidence: Confidence;
@@ -74,6 +75,42 @@ export interface EstimateRequest {
   walls: Walls;
   layout: Layout;
   priceOverridePerSqft: number | null;
+  /** The user's changes to closets / built-ins. Manual and edited values are exact and override the AI. */
+  areaEdits?: AreaEdits;
+}
+
+/** An exact size the user entered: width along the wall × depth, in feet. */
+export interface AreaSize {
+  widthFt: number;
+  depthFt: number;
+}
+
+export interface AreaEdits {
+  /**
+   * Edits to AI-detected items, keyed by `section:<index>` / `obstacle:<index>` (index into the
+   * analysis). Keys only make sense for the analysis they were made on: clear them on re-analysis.
+   */
+  ai: Record<string, AreaSize | { removed: true }>;
+  /** Closets the user added by hand. */
+  manualClosets: ({ id: string; label: string } & AreaSize)[];
+}
+
+export const NO_AREA_EDITS: AreaEdits = { ai: {}, manualClosets: [] };
+
+export interface AreaItem {
+  /** `section:<i>`, `obstacle:<i>` or `manual:<id>`. */
+  key: string;
+  kind: "closet" | "other" | "obstacle";
+  label: string;
+  origin: "ai" | "manual";
+  /** measured = typed by the user (manual or edited); estimated = the AI's range. */
+  source: DimensionSource;
+  /** Along the wall (the longer side). */
+  widthFt: ResultRange;
+  depthFt: ResultRange;
+  areaSqft: ResultRange;
+  /** Removed by the user: shown for undo, excluded from totals. */
+  removed: boolean;
 }
 
 /** The single known measurement to send to the AI, if exactly one wall is entered. */
@@ -131,8 +168,6 @@ function merge(req: EstimateRequest, product: FlooringProduct, settings: Setting
   const warnings: EstimateWarning[] = usable ? issueWarnings(usable.issues) : [];
   const scaleFrom: string[] = usable ? usable.scaleReferences.map((r) => r.object) : [];
   const mains = usable ? usable.sections.filter((s) => s.label === "main") : [];
-  const closets = usable ? usable.sections.filter((s) => s.label === "closet") : [];
-  const others = usable ? usable.sections.filter((s) => s.label === "other") : [];
 
   let main: Estimate["main"];
   let mainRects: Rect[];
@@ -163,10 +198,7 @@ function merge(req: EstimateRequest, product: FlooringProduct, settings: Setting
     main = { longer: { ft: longer, source: "measured" }, shorter: { ft: shorter, source: "measured" } };
     mainRects = [{ length: longer, width: shorter }];
     confidence = "measured";
-    confidenceReason =
-      closets.length || others.length || usable?.obstacles.length
-        ? "Both walls were measured. Closets and built-ins are estimated from the photos."
-        : "Both walls were measured.";
+    confidenceReason = "Both walls were measured."; // refined below once closets are known
     scaleFrom.splice(0, scaleFrom.length, "your measurements");
   } else {
     // Rows 2, 4, 5, 8: usable AI analysis, at most one wall entered.
@@ -242,9 +274,19 @@ function merge(req: EstimateRequest, product: FlooringProduct, settings: Setting
     }
   }
 
-  const closetRects = closets.map((s, i) => rectOf(s, `Closet ${i + 1}`));
-  const otherRects = others.map((s, i) => rectOf(s, `Extra area ${i + 1}`));
-  const obstacleRects = (usable?.obstacles ?? []).map((o) => rectOf(o, o.label || "Built-in"));
+  const items = areaItems(usable, req.areaEdits ?? NO_AREA_EDITS);
+  const active = items.filter((i) => !i.removed);
+  const rectsOf = (kind: AreaItem["kind"]): Rect[] =>
+    active.filter((i) => i.kind === kind).map((i) => ({ length: i.widthFt, width: i.depthFt }));
+  const closetRects = rectsOf("closet");
+  const otherRects = rectsOf("other");
+  const obstacleRects = rectsOf("obstacle");
+
+  if (confidence === "measured" && active.some((i) => i.source === "estimated")) {
+    confidenceReason = "Both walls were measured. Closets and built-ins marked estimated come from the photos.";
+  } else if (confidence === "measured" && active.length) {
+    confidenceReason = "Both walls and all closets were measured.";
+  }
 
   const result = estimateRoom(
     {
@@ -266,11 +308,11 @@ function merge(req: EstimateRequest, product: FlooringProduct, settings: Setting
       shape: usable && !(hasL && hasS) ? usable.shape : "rectangle",
       main,
       mainAreaSqft: areaOf(mainRects)!,
+      items,
       closetAreaSqft: areaOf(closetRects),
-      closetCount: closets.length,
+      closetCount: closetRects.length,
       otherAreaSqft: areaOf(otherRects),
       obstacleAreaSqft: areaOf(obstacleRects),
-      obstacleLabels: (usable?.obstacles ?? []).map((o) => o.label),
       result,
       confidence,
       confidenceReason,
@@ -280,4 +322,58 @@ function merge(req: EstimateRequest, product: FlooringProduct, settings: Setting
       reanalyzeWith,
     },
   };
+}
+
+const KIND_LABEL: Record<AreaItem["kind"], string> = { closet: "Closet", other: "Extra area", obstacle: "Built-in" };
+
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+/**
+ * Closets / extra areas / built-ins: the AI's (with the user's edits applied) plus manual closets.
+ * Manual and edited sizes are exact (measured); untouched AI items keep their range (estimated).
+ */
+export function areaItems(analysis: RoomAnalysis | null, edits: AreaEdits): AreaItem[] {
+  const items: AreaItem[] = [];
+  const counts = { closet: 0, other: 0, obstacle: 0 };
+
+  const push = (
+    key: string,
+    kind: AreaItem["kind"],
+    label: string,
+    ai: { lengthFt: Section["lengthFt"]; widthFt: Section["widthFt"] } | null,
+    manual: AreaSize | null,
+  ) => {
+    const edit = edits.ai[key];
+    const removed = !!edit && "removed" in edit;
+    const exactSize = manual ?? (edit && !("removed" in edit) ? edit : null);
+    const widthFt = exactSize ? exact(toRange(exactSize.widthFt, `${label} width`).likely) : toRange(ai!.lengthFt, `${label} width`);
+    const depthFt = exactSize ? exact(toRange(exactSize.depthFt, `${label} depth`).likely) : toRange(ai!.widthFt, `${label} depth`);
+    items.push({
+      key,
+      kind,
+      label,
+      origin: manual ? "manual" : "ai",
+      source: exactSize ? "measured" : "estimated",
+      widthFt,
+      depthFt,
+      areaSqft: rectAreaSqft({ length: widthFt, width: depthFt }, "ft"),
+      removed,
+    });
+  };
+
+  if (analysis?.usable) {
+    analysis.sections.forEach((s, i) => {
+      if (s.label === "main") return;
+      const kind = s.label;
+      push(`section:${i}`, kind, `${KIND_LABEL[kind]} ${++counts[kind]}`, s, null);
+    });
+    analysis.obstacles.forEach((o, i) => {
+      counts.obstacle++;
+      push(`obstacle:${i}`, "obstacle", capitalize(o.label.trim()) || `${KIND_LABEL.obstacle} ${counts.obstacle}`, o, null);
+    });
+  }
+  for (const m of edits.manualClosets) {
+    push(`manual:${m.id}`, "closet", m.label || `${KIND_LABEL.closet} ${++counts.closet}`, null, m);
+  }
+  return items;
 }

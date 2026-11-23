@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { ProcessedImage } from "@/lib/images/preprocess";
 import { DEFAULT_MODEL, MODELS, estimateCostUsd, isModelId, type ModelId } from "./models";
-import { PROMPT_VERSION, SYSTEM_PROMPT, buildRetryMessage, buildUserContent } from "./prompt";
+import { buildRetryMessage, buildUserContent, getPrompt } from "./prompt";
 import { AnalysisError, buildRoomAnalysis, type AnalyzeOptions, type RoomAnalyzer } from "./provider";
 import {
   ModelOutputSchema,
@@ -107,6 +107,7 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
   return {
     async analyzeRoom(images: ProcessedImage[], options: AnalyzeOptions = {}): Promise<RoomAnalysis> {
       const model = resolveModel(options.model, env);
+      const prompt = getPrompt(options.promptId);
       client ??= buildClient(env, deps.sdkOptions);
       const started = now();
 
@@ -117,10 +118,16 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
       const logUsage = (attempts: number, outcome: string) => {
         const cost = estimateCostUsd(model, inputTokens, outputTokens);
         log(
-          `[ai] ${outcome} model=${model} prompt=${PROMPT_VERSION} photos=${images.length} attempts=${attempts} ` +
+          `[ai] ${outcome} model=${model} prompt=${prompt.id}@${prompt.version} photos=${images.length} attempts=${attempts} ` +
             `in=${inputTokens} out=${outputTokens} est=$${cost.toFixed(4)} ${now() - started}ms`,
         );
         return cost;
+      };
+
+      /** Attach what was spent so far, so callers (e.g. the eval's cost cap) can count failed runs. */
+      const withSpend = (err: AnalysisError, attempts: number, outcome: string): AnalysisError => {
+        err.spend = { inputTokens, outputTokens, estimatedCostUsd: logUsage(attempts, outcome) };
+        return err;
       };
 
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -131,13 +138,13 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
           response = await client.messages.create({
             model,
             max_tokens: MAX_OUTPUT_TOKENS,
-            system: SYSTEM_PROMPT,
+            system: prompt.system,
             messages,
             output_config: { effort: MODELS[model].effort, format: OUTPUT_FORMAT },
           });
         } catch (e) {
-          const err = toAnalysisError(e);
-          logUsage(attempt, `error(${err.code})`);
+          const base = toAnalysisError(e);
+          const err = withSpend(base, attempt, `error(${base.code})`);
           log(`[ai] ${err.message}`);
           throw err;
         }
@@ -147,12 +154,15 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
         outputTokens += u.output_tokens;
 
         if (response.stop_reason === "refusal") {
-          logUsage(attempt, "refused");
-          throw new AnalysisError(
+          throw withSpend(
+            new AnalysisError(
+              "refused",
+              "The photo analyzer couldn't process these photos. Try different photos of the room.",
+              422,
+              `Model refused (category: ${response.stop_details?.category ?? "none"})`,
+            ),
+            attempt,
             "refused",
-            "The photo analyzer couldn't process these photos. Try different photos of the room.",
-            422,
-            `Model refused (category: ${response.stop_details?.category ?? "none"})`,
           );
         }
 
@@ -181,7 +191,8 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
             const estimatedCostUsd = logUsage(attempt, "ok");
             return buildRoomAnalysis(images, output, {
               model,
-              promptVersion: PROMPT_VERSION,
+              promptId: prompt.id,
+              promptVersion: prompt.version,
               knownMeasurement: options.knownMeasurement ?? null,
               inputTokens,
               outputTokens,
@@ -195,12 +206,15 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
 
         log(`[ai] attempt ${attempt} unusable: ${errors.join("; ")}`);
         if (attempt === MAX_ATTEMPTS) {
-          logUsage(attempt, "invalid_output");
-          throw new AnalysisError(
+          throw withSpend(
+            new AnalysisError(
+              "invalid_output",
+              "The photo analyzer returned a result we couldn't use. Please try again.",
+              502,
+              `Output failed validation twice: ${errors.join("; ")}`,
+            ),
+            attempt,
             "invalid_output",
-            "The photo analyzer returned a result we couldn't use. Please try again.",
-            502,
-            `Output failed validation twice: ${errors.join("; ")}`,
           );
         }
         // Pass the assistant turn back unchanged (thinking blocks included), then the errors.

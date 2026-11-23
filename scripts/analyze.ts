@@ -9,7 +9,7 @@ import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { analyzeFiles } from "@/lib/ai/analyze-files";
 import { DEFAULT_MODEL, MODEL_IDS, isModelId } from "@/lib/ai/models";
-import type { KnownMeasurement } from "@/lib/ai/prompt";
+import { DEFAULT_PROMPT_ID, PROMPT_IDS, isPromptId, type KnownMeasurement } from "@/lib/ai/prompt";
 import { UserFacingError } from "@/lib/errors";
 
 const USAGE = `Usage: npm run analyze -- <photo> [photo ...] [options]
@@ -19,6 +19,7 @@ Options:
   --which <which>     what --known is: longest | shortest | unknown (default: unknown)
   --room <name>       room name, e.g. "Main bedroom"
   --model <id>        ${MODEL_IDS.join(" | ")} (default: ${DEFAULT_MODEL})
+  --prompt <id>       ${PROMPT_IDS.join(" | ")} (default: ${DEFAULT_PROMPT_ID})
   --json              print only the JSON result
   -h, --help          show this help`;
 
@@ -37,6 +38,7 @@ async function main() {
       which: { type: "string", default: "unknown" },
       room: { type: "string" },
       model: { type: "string" },
+      prompt: { type: "string" },
       json: { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
@@ -59,6 +61,9 @@ async function main() {
     }
     knownMeasurement = { valueFt, which };
   }
+  if (values.prompt !== undefined && !isPromptId(values.prompt)) {
+    fail(`unknown prompt "${values.prompt}". Use one of: ${PROMPT_IDS.join(", ")}`);
+  }
   if (values.model !== undefined && !isModelId(values.model)) {
     fail(`unknown model "${values.model}". Use one of: ${MODEL_IDS.join(", ")}`);
   }
@@ -67,6 +72,7 @@ async function main() {
     roomName: values.room,
     knownMeasurement,
     model: values.model as (typeof MODEL_IDS)[number] | undefined,
+    promptId: values.prompt as (typeof PROMPT_IDS)[number] | undefined,
   });
 
   console.log(JSON.stringify(result, null, 2));
@@ -75,7 +81,7 @@ async function main() {
     console.log(
       [
         "",
-        `Model:     ${m.model} (prompt ${m.promptVersion}, ${m.attempts} attempt${m.attempts > 1 ? "s" : ""})`,
+        `Model:     ${m.model} (prompt ${m.promptId} = ${m.promptVersion}, ${m.attempts} attempt${m.attempts > 1 ? "s" : ""})`,
         `Tokens:    ${m.inputTokens.toLocaleString()} in / ${m.outputTokens.toLocaleString()} out`,
         `Est. cost: $${m.estimatedCostUsd.toFixed(4)} USD`,
         `Time:      ${(m.durationMs / 1000).toFixed(1)}s`,

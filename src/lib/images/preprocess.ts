@@ -16,6 +16,11 @@ export interface InputImage {
   /** Original file name, used in error messages. */
   name: string;
   bytes: Uint8Array;
+  /**
+   * Lens info read by the browser BEFORE it shrank the photo (shrinking drops EXIF). Used only if the
+   * uploaded file has no lens data of its own.
+   */
+  lensHint?: { focalLength35mm: number | null; lensModel: string | null } | null;
 }
 
 export interface ProcessedImage {
@@ -111,7 +116,9 @@ async function processOne(file: InputImage): Promise<ProcessedImage> {
   }
 
   // 2. Lens info — the ONLY metadata we keep — read before anything is stripped.
-  const lensInfo = readLensInfo(meta.exif);
+  const fromExif = readLensInfo(meta.exif);
+  const noExifLens = fromExif.focalLength35mm === null && fromExif.lensModel === null;
+  const lensInfo = noExifLens && file.lensHint ? { ...file.lensHint, focalLengthMm: null } : fromExif;
   const lens = classifyLens(lensInfo);
 
   // 3. Get a pipeline sharp can decode.

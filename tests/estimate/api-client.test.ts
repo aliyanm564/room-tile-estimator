@@ -1,15 +1,21 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { API_ERROR_MESSAGES, EstimateApiError, requestAnalysis } from "@/lib/estimate/api-client";
+import { API_ERROR_MESSAGES, EstimateApiError, TransportError, requestAnalysis, type Transport } from "@/lib/estimate/api-client";
+import type { PreparedPhoto } from "@/lib/images/shrink-client";
 
-const photo = new File([new Uint8Array([1, 2, 3])], "a.jpg", { type: "image/jpeg" });
+const photo = (lensHint: PreparedPhoto["lensHint"] = null): PreparedPhoto => ({
+  file: new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }),
+  name: "a.jpg",
+  lensHint,
+  shrunk: !!lensHint,
+});
 
 const respond = (status: number, body: unknown, raw = false) =>
-  vi.fn<typeof fetch>().mockResolvedValue(new Response(raw ? String(body) : JSON.stringify(body), { status }));
+  vi.fn<Transport>().mockResolvedValue({ status, text: raw ? String(body) : JSON.stringify(body) });
 
-async function failure(fetchImpl: typeof fetch, timeoutMs?: number) {
-  const err = await requestAnalysis([photo], undefined, { fetchImpl, timeoutMs }).catch((e) => e);
+async function failure(transport: Transport) {
+  const err = await requestAnalysis([photo()], undefined, { transport }).catch((e) => e);
   expect(err).toBeInstanceOf(EstimateApiError);
   return err as EstimateApiError;
 }
@@ -22,14 +28,31 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe("requestAnalysis", () => {
-  it("posts the photos and known measurement as multipart to /api/estimate", async () => {
-    const f = respond(200, { meta: {}, usable: true });
-    await requestAnalysis([photo, photo], { valueFt: 12.47, which: "longest" }, { fetchImpl: f });
-    const [url, init] = f.mock.calls[0];
+  it("posts photos, known measurement and lens hints as multipart to /api/estimate", async () => {
+    const t = respond(200, { meta: {}, usable: true });
+    await requestAnalysis([photo({ focalLength35mm: 13, lensModel: "back ultra wide camera" }), photo()], { valueFt: 12.47, which: "longest" }, { transport: t });
+    const [url, form] = t.mock.calls[0];
     expect(url).toBe("/api/estimate");
-    const form = init!.body as FormData;
     expect(form.getAll("images")).toHaveLength(2);
     expect(JSON.parse(String(form.get("knownMeasurement")))).toEqual({ valueFt: 12.47, which: "longest" });
+    expect(JSON.parse(String(form.get("lensHints")))).toEqual([{ focalLength35mm: 13, lensModel: "back ultra wide camera" }, null]);
+  });
+
+  it("omits lensHints when no photo has one", async () => {
+    const t = respond(200, { meta: {} });
+    await requestAnalysis([photo()], undefined, { transport: t });
+    expect(t.mock.calls[0][1].has("lensHints")).toBe(false);
+  });
+
+  it("passes upload progress through", async () => {
+    const seen: number[] = [];
+    const t: Transport = async (_u, _f, o) => {
+      o.onUploadProgress?.(0.5);
+      o.onUploadProgress?.(1);
+      return { status: 200, text: JSON.stringify({ meta: {} }) };
+    };
+    await requestAnalysis([photo()], undefined, { transport: t, onUploadProgress: (f) => seen.push(f) });
+    expect(seen).toEqual([0.5, 1]);
   });
 
   it("shows the server's friendly message", async () => {
@@ -49,11 +72,10 @@ describe("requestAnalysis", () => {
     expect(err413.code).toBe("file_too_large");
   });
 
-  it("network failure and client timeout → friendly messages", async () => {
-    expect((await failure(vi.fn<typeof fetch>().mockRejectedValue(new TypeError("Failed to fetch")))).code).toBe("network_error");
-    const hang: typeof fetch = (_u, init) =>
-      new Promise((_res, rej) => init?.signal?.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError"))));
-    expect((await failure(hang, 5)).code).toBe("client_timeout");
+  it("network failure and timeout → friendly messages", async () => {
+    expect((await failure(vi.fn<Transport>().mockRejectedValue(new TransportError("network")))).code).toBe("network_error");
+    expect((await failure(vi.fn<Transport>().mockRejectedValue(new TransportError("timeout")))).code).toBe("client_timeout");
+    expect((await failure(vi.fn<Transport>().mockRejectedValue(new Error("weird")))).code).toBe("network_error");
   });
 
   it("every error code the server can return has a friendly client message", () => {

@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
-/* Light-only for now; the UI is redesigned in Phase 5. */
+/* Light-only for now. Brand colours come from config/branding.json (set on <html> in layout.tsx). */
 :root {
   --background: #fafaf9;
   --foreground: #1c1917;
+  --brand: #1c1917;
+  --brand-text: #ffffff;
   color-scheme: light;
 }
 
@@ -18,4 +20,20 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Print / "Save as PDF": plain black on white, no app chrome (elements use print:hidden). */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
