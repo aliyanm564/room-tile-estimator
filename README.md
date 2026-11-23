@@ -25,8 +25,19 @@ npm run lint     # ESLint
 npm run build    # production build
 ```
 
-To try it on your phone, run `npm run dev -- -H 0.0.0.0` and open `http://<your-mac's-LAN-IP>:3000`
-on a phone connected to the same Wi-Fi.
+### Testing on your phone
+
+1. Put the phone on the same Wi-Fi as your Mac.
+2. Run `npm run dev -- -H 0.0.0.0 -p 3000`.
+3. Find your Mac's IP with `ipconfig getifaddr en0` and open `http://<that IP>:3000` on the phone.
+
+Next.js blocks its dev-server resources for hosts other than `localhost`. If it does, the page
+loads but nothing responds to taps. `next.config.ts` allows the usual home/office ranges
+(`192.168.*.*`, `10.*.*.*`) and `*.local` names through `allowedDevOrigins`. If your network uses
+something else (e.g. `172.16.x.x`), add it there and **restart the dev server**. The terminal shows a
+"Blocked cross-origin request" warning naming the host to add.
+
+A production build skips this check: `npm run build && npm start -- -H 0.0.0.0`.
 
 ## Editing the flooring catalog
 

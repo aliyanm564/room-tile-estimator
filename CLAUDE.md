@@ -71,6 +71,9 @@ Estimates are for **budgeting**, but should be as accurate as possible. Show unc
 - `src/lib/catalog.ts` — loads + Zod-validates config
 - `src/lib/calc/` — pure functions: `units.ts`, `range.ts`, `area.ts`, `flooring.ts`, `cost.ts`, `estimate.ts`
 - `src/lib/format.ts` — display rounding
+- `src/lib/measurement-input.ts` — form state for lengths/price: one canonical value at full
+  precision (feet, $/sq ft); text kept exactly as typed; text re-rendered only on unit switch or blur
+- `src/components/` — `Calculator.tsx`, `UnitsToggle.tsx` (client components)
 - `src/types/` — shared types (RoomInput, RoomResult, FlooringProduct, Settings, Project, Room)
 - `tests/` — Vitest tests (`tests/calc/` for calculator, `tests/catalog.test.ts` for config)
 
@@ -79,3 +82,7 @@ Estimates are for **budgeting**, but should be as accurate as possible. Show unc
 - **Every calc change gets tests.** Run `npm test`, `npm run lint`, `npm run build` before calling work done.
 - Validate at boundaries (config load, user input, AI output) with Zod; trust types inside.
 - Don't invent real SKUs, URLs, or prices.
+- Inputs: never derive math from display text, and never rewrite an input's text while the user is
+  typing. Tap targets ≥ 44px.
+- Phone testing in dev relies on `allowedDevOrigins` in `next.config.ts` (LAN hosts are blocked by
+  default in Next 16, and the page silently fails to hydrate).

@@ -1,14 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FocusEvent } from "react";
 import { CalcError, estimateRoom } from "@/lib/calc";
-import {
-  feetAndInchesToFeet,
-  feetToMeters,
-  metersToFeet,
-  pricePerSqftToPerSqm,
-  pricePerSqmToPerSqft,
-} from "@/lib/calc/units";
+import { pricePerSqftToPerSqm } from "@/lib/calc/units";
 import {
   PRICE_SOURCE_LABEL,
   formatArea,
@@ -17,21 +11,26 @@ import {
   formatPercent,
   formatRange,
 } from "@/lib/format";
+import {
+  blurLength,
+  blurPrice,
+  editLength,
+  editPrice,
+  emptyLength,
+  emptyPrice,
+  priceDisplayText,
+  switchLengthUnits,
+  switchPriceUnits,
+  type LengthField,
+  type LengthPart,
+} from "@/lib/measurement-input";
 import type { FlooringProduct, Layout, RoomResult, Settings, UnitSystem } from "@/types";
+import UnitsToggle from "./UnitsToggle";
 
 interface Props {
   products: FlooringProduct[];
   settings: Settings;
 }
-
-/** A length typed by the user: feet + inches (imperial) or metres (metric). */
-interface LengthField {
-  ft: string;
-  in: string;
-  m: string;
-}
-
-const emptyLength: LengthField = { ft: "", in: "", m: "" };
 
 const LAYOUT_LABELS: Record<Layout, string> = {
   straight: "Straight",
@@ -39,37 +38,10 @@ const LAYOUT_LABELS: Record<Layout, string> = {
   herringbone: "Herringbone",
 };
 
-/** Parse a number field. Empty → undefined; garbage → NaN (caught by calc validation). */
-function parseField(s: string): number | undefined {
-  const t = s.trim().replace(",", ".");
-  return t === "" ? undefined : Number(t);
-}
-
-/** Field → feet. Returns undefined if nothing entered yet. */
-function lengthToFeet(f: LengthField, units: UnitSystem): number | undefined {
-  if (units === "metric") {
-    const m = parseField(f.m);
-    return m === undefined ? undefined : metersToFeet(m);
-  }
-  const ft = parseField(f.ft);
-  const inches = parseField(f.in);
-  if (ft === undefined && inches === undefined) return undefined;
-  return feetAndInchesToFeet(ft ?? 0, inches ?? 0);
-}
-
-/** Re-express a field in the other unit system so toggling keeps the same room size. */
-function convertField(f: LengthField, from: UnitSystem): LengthField {
-  const feet = lengthToFeet(f, from);
-  if (feet === undefined || !Number.isFinite(feet)) return emptyLength;
-  if (from === "imperial") {
-    return { ...emptyLength, m: String(Number(feetToMeters(feet).toFixed(2))) };
-  }
-  const whole = Math.floor(feet);
-  const inches = Number(((feet - whole) * 12).toFixed(1));
-  return { ...emptyLength, ft: String(whole), in: inches ? String(inches) : "" };
-}
-
 type Outcome = { kind: "empty" } | { kind: "error"; message: string } | { kind: "ok"; result: RoomResult };
+
+/** True when focus is moving to somewhere outside this element (not between its own inputs). */
+const focusLeft = (e: FocusEvent<HTMLElement>) => !e.currentTarget.contains(e.relatedTarget as Node | null);
 
 export default function Calculator({ products, settings }: Props) {
   const [units, setUnits] = useState<UnitSystem>(settings.defaultUnits);
@@ -77,31 +49,21 @@ export default function Calculator({ products, settings }: Props) {
   const [width, setWidth] = useState<LengthField>(emptyLength);
   const [productId, setProductId] = useState(products[0].id);
   const [layout, setLayout] = useState<Layout>("straight");
-  const [priceOverride, setPriceOverride] = useState("");
+  const [price, setPrice] = useState(emptyPrice);
 
   const product = products.find((p) => p.id === productId) ?? products[0];
 
+  // All math reads canonical values (feet, $/sq ft) — never the display text.
   const outcome: Outcome = useMemo(() => {
-    const lengthFt = lengthToFeet(length, units);
-    const widthFt = lengthToFeet(width, units);
-    if (lengthFt === undefined || widthFt === undefined) return { kind: "empty" };
-
-    const overrideRaw = parseField(priceOverride);
-    const overridePerSqft =
-      overrideRaw === undefined
-        ? null
-        : units === "metric"
-          ? pricePerSqmToPerSqft(overrideRaw)
-          : overrideRaw;
-
+    if (length.feet === null || width.feet === null) return { kind: "empty" };
     try {
       const result = estimateRoom(
         {
           unit: "ft",
-          sections: [{ length: lengthFt, width: widthFt }],
+          sections: [{ length: length.feet, width: width.feet }],
           layout,
           productId: product.id,
-          priceOverridePerSqft: overridePerSqft,
+          priceOverridePerSqft: price.perSqft,
         },
         product,
         settings,
@@ -111,17 +73,13 @@ export default function Calculator({ products, settings }: Props) {
       if (e instanceof CalcError) return { kind: "error", message: e.message };
       throw e;
     }
-  }, [length, width, units, layout, product, priceOverride, settings]);
+  }, [length.feet, width.feet, layout, product, price.perSqft, settings]);
 
   function switchUnits(next: UnitSystem) {
     if (next === units) return;
-    setLength(convertField(length, units));
-    setWidth(convertField(width, units));
-    const p = parseField(priceOverride);
-    if (p !== undefined && Number.isFinite(p)) {
-      const converted = next === "metric" ? pricePerSqftToPerSqm(p) : pricePerSqmToPerSqft(p);
-      setPriceOverride(String(Number(converted.toFixed(2))));
-    }
+    setLength((f) => switchLengthUnits(f, next));
+    setWidth((f) => switchLengthUnits(f, next));
+    setPrice((f) => switchPriceUnits(f, next));
     setUnits(next);
   }
 
@@ -133,30 +91,22 @@ export default function Calculator({ products, settings }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
-        <fieldset>
-          <legend className="mb-2 text-base font-semibold">Units</legend>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup">
-            {(["imperial", "metric"] as const).map((u) => (
-              <button
-                key={u}
-                type="button"
-                role="radio"
-                aria-checked={units === u}
-                onClick={() => switchUnits(u)}
-                className={`min-h-12 rounded-xl text-base font-medium ring-1 ${
-                  units === u
-                    ? "bg-stone-900 text-white ring-stone-900"
-                    : "bg-white text-stone-800 ring-stone-300"
-                }`}
-              >
-                {u === "imperial" ? "Feet & inches" : "Metres"}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <UnitsToggle value={units} onChange={switchUnits} />
 
-        <LengthInput label="Room length" value={length} onChange={setLength} units={units} />
-        <LengthInput label="Room width" value={width} onChange={setWidth} units={units} />
+        <LengthInput
+          label="Room length"
+          field={length}
+          units={units}
+          onEdit={(part, text) => setLength((f) => editLength(f, units, part, text))}
+          onLeave={() => setLength((f) => blurLength(f, units))}
+        />
+        <LengthInput
+          label="Room width"
+          field={width}
+          units={units}
+          onEdit={(part, text) => setWidth((f) => editLength(f, units, part, text))}
+          onLeave={() => setWidth((f) => blurLength(f, units))}
+        />
 
         <label className="flex flex-col gap-2">
           <span className="text-base font-semibold">Flooring</span>
@@ -200,13 +150,11 @@ export default function Calculator({ products, settings }: Props) {
             <span className="text-lg text-stone-600">$</span>
             <input
               inputMode="decimal"
-              placeholder={
-                units === "metric"
-                  ? String(Number(pricePerSqftToPerSqm(product.pricePerSqft).toFixed(2)))
-                  : String(product.pricePerSqft)
-              }
-              value={priceOverride}
-              onChange={(e) => setPriceOverride(e.target.value)}
+              aria-label={units === "metric" ? "Your price per square metre" : "Your price per square foot"}
+              placeholder={priceDisplayText(product.pricePerSqft, units)}
+              value={price.text}
+              onChange={(e) => setPrice(editPrice(units, e.target.value))}
+              onBlur={() => setPrice((f) => blurPrice(f, units))}
               className="min-h-12 w-full rounded-xl px-3 text-lg ring-1 ring-stone-300"
             />
             <span className="shrink-0 text-base text-stone-600">
@@ -224,56 +172,43 @@ export default function Calculator({ products, settings }: Props) {
 
 function LengthInput({
   label,
-  value,
-  onChange,
+  field,
   units,
+  onEdit,
+  onLeave,
 }: {
   label: string;
-  value: LengthField;
-  onChange: (v: LengthField) => void;
+  field: LengthField;
   units: UnitSystem;
+  onEdit: (part: LengthPart, text: string) => void;
+  onLeave: () => void;
 }) {
   const inputClass = "min-h-12 w-full rounded-xl px-3 text-lg ring-1 ring-stone-300";
+  const box = (part: LengthPart, unitLabel: string, ariaUnit: string, placeholder: string) => (
+    <label className="flex items-center gap-2">
+      <input
+        inputMode="decimal"
+        aria-label={`${label} ${ariaUnit}`}
+        placeholder={placeholder}
+        value={field.text[part]}
+        onChange={(e) => onEdit(part, e.target.value)}
+        className={inputClass}
+      />
+      <span className="text-base text-stone-600">{unitLabel}</span>
+    </label>
+  );
+
   return (
-    <fieldset>
+    // Tidy the display only when focus leaves the whole group, not when moving ft → in.
+    <fieldset onBlur={(e) => focusLeft(e) && onLeave()}>
       <legend className="mb-2 text-base font-semibold">{label}</legend>
       {units === "imperial" ? (
         <div className="grid grid-cols-2 gap-2">
-          <label className="flex items-center gap-2">
-            <input
-              inputMode="decimal"
-              aria-label={`${label} feet`}
-              placeholder="12"
-              value={value.ft}
-              onChange={(e) => onChange({ ...value, ft: e.target.value })}
-              className={inputClass}
-            />
-            <span className="text-base text-stone-600">ft</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              inputMode="decimal"
-              aria-label={`${label} inches`}
-              placeholder="0"
-              value={value.in}
-              onChange={(e) => onChange({ ...value, in: e.target.value })}
-              className={inputClass}
-            />
-            <span className="text-base text-stone-600">in</span>
-          </label>
+          {box("ft", "ft", "feet", "12")}
+          {box("in", "in", "inches", "0")}
         </div>
       ) : (
-        <label className="flex items-center gap-2">
-          <input
-            inputMode="decimal"
-            aria-label={`${label} metres`}
-            placeholder="3.6"
-            value={value.m}
-            onChange={(e) => onChange({ ...value, m: e.target.value })}
-            className={inputClass}
-          />
-          <span className="text-base text-stone-600">m</span>
-        </label>
+        box("m", "m", "metres", "3.6")
       )}
     </fieldset>
   );
