@@ -1,0 +1,8 @@
+{
+  "wasteFactors": {
+    "straight": 0.1,
+    "diagonal": 0.15,
+    "herringbone": 0.15
+  },
+  "defaultUnits": "imperial"
+}
