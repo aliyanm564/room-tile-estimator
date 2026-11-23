@@ -1,9 +1,7 @@
+
 # Flooring Estimator
 
-A tool for construction managers to estimate how much flooring a room needs and what it will cost.
-Hardwood first; other flooring types later. Estimates are for budgeting.
-
-**Current status: Phase 5.** Create a project for each house, add its rooms one by one, measure the
+A tool for construction managers to estimate how much flooring a room needs and what it will cost. Estimates are for budgeting. Create a project for each house, add its rooms one by one, measure the
 walls and/or take photos, and get the square footage, boxes and cost per room plus a house total you
 can print or save as PDF. Projects are saved in the browser. See [CLAUDE.md](CLAUDE.md) for the roadmap
 and design decisions.
@@ -33,47 +31,6 @@ because flooring normally goes into closets).
   Both walls + your closets give a fully measured estimate with no photos at all.
 - Photos are shrunk in the browser before upload when possible, and are **never saved**: after a reload,
   a room keeps its analysis and result, but you'll need to re-add photos to re-analyze.
-
-## Demo
-
-1. `npm run dev` and open http://localhost:3000 (works on a phone too; see below).
-2. Press **Load sample project**. It creates "Sample: 24 Maple Street" with 3 rooms (a bedroom with
-   one measured wall and a photo analysis, a fully measured living room with a closet, and a kitchen
-   estimated from photos with an island subtracted). It uses saved example data: **no photos, no API
-   key, no internet needed.**
-3. Open a room's result, then **Print / save as PDF** on the project screen for a one-page summary
-   (use the browser's "Save as PDF" in the print dialog).
-
-Prices in the demo are placeholders and are labelled as such.
-
-## Rebranding for a client
-
-Edit [`config/branding.json`](config/branding.json); no code changes:
-
-```json
-{
-  "appName": "Acme Floor Planner",
-  "tagline": "Flooring budgets in minutes",
-  "primaryColor": "#1d4ed8",
-  "logoPath": "/acme-logo.svg"
-}
-```
-
-- `primaryColor` is a hex colour for buttons and accents; text on it switches to black or white
-  automatically.
-- `logoPath` is a file you put in a `public/` folder at the project root (create it if needed), or
-  `null` for no logo.
-- The file is checked at startup; a typo gives a clear error naming the field. Restart `npm run dev`
-  after editing.
-
-## Resetting local data
-
-Projects live in this browser's local storage (key `flooring-estimator`), separately on each device
-and browser.
-- **In the app:** on the Projects screen, **Delete all saved data** (asks to confirm).
-- **By hand:** browser DevTools → Application → Local Storage → delete `flooring-estimator`.
-- If saved data is ever unreadable, the app starts fresh, shows a message, and keeps a copy under
-  `flooring-estimator:backup:<date>`.
 
 ## Setup
 
@@ -107,6 +64,20 @@ npm run lint     # ESLint
 npm run build    # production build
 ```
 
+### Testing on your phone
+
+1. Put the phone on the same Wi-Fi as your Mac.
+2. Run `npm run dev -- -H 0.0.0.0 -p 3000`.
+3. Find your Mac's IP with `ipconfig getifaddr en0` and open `http://<that IP>:3000` on the phone.
+
+Next.js blocks its dev-server resources for hosts other than `localhost`. If it does, the page
+loads but nothing responds to taps. `next.config.ts` allows the usual home/office ranges
+(`192.168.*.*`, `10.*.*.*`) and `*.local` names through `allowedDevOrigins`. If your network uses
+something else (e.g. `172.16.x.x`), add it there and **restart the dev server**. The terminal shows a
+"Blocked cross-origin request" warning naming the host to add.
+
+A production build skips this check: `npm run build && npm start -- -H 0.0.0.0`.
+
 ### Analyze room photos from the command line
 
 Calls the real API, so it costs money.
@@ -133,60 +104,6 @@ committed.
 
 `--prompt v2|v3` picks a registered prompt version (default: `v2`).
 
-### Accuracy evaluation
-
-The eval runs the photo analyzer on test rooms with known measurements and reports how close it gets,
-how much identical runs vary, and what it costs. It calls the real API, so it costs money; there's a
-hard cap.
-
-**1. Measure the room** (tape or laser, feet):
-- the main room, **wall to wall, without closets**: the longer and the shorter dimension
-- **each closet separately**: width along the wall × depth
-- the **total floor area** that gets flooring: main room + closets − permanent built-ins
-
-**2. Add photos** (2–6, with the 1x camera; corners and doorway views) to `tests/fixtures/rooms/`. That
-folder is gitignored: photos of real homes are never committed.
-
-**3. Add the room to [`eval/rooms.json`](eval/rooms.json):**
-
-```json
-{
-  "id": "kitchen-2",
-  "description": "Kitchen with an island",
-  "photos": ["tests/fixtures/rooms/kitchen2-a.jpg", "tests/fixtures/rooms/kitchen2-b.jpg"],
-  "truth": {
-    "totalAreaSqft": 148.0,
-    "main": { "lengthFt": 14.0, "widthFt": 11.5 },
-    "closets": [{ "widthFt": 3.0, "depthFt": 2.0 }],
-    "notes": "Island 6 × 3 ft subtracted from the total."
-  },
-  "conditions": [
-    { "id": "none", "knownMeasurement": null, "valid": true },
-    { "id": "known-longest", "knownMeasurement": { "valueFt": 14.0, "which": "longest" }, "valid": true },
-    { "id": "known-shortest", "knownMeasurement": { "valueFt": 11.5, "which": "shortest" }, "valid": true }
-  ]
-}
-```
-
-Only `totalAreaSqft` is required in `truth`. If a measurement wasn't taken wall to wall without closets,
-mark that condition `"valid": false` with an `"invalidReason"`; it's skipped and listed in the report.
-
-**4. Run it:**
-
-```bash
-# See what would run and what it would cost (no API calls):
-npm run eval -- --dry-run --prompt v2,v3 --model claude-sonnet-5-5,claude-haiku-5-5 --repeats 3
-
-# Run it for real (stops before spending more than --max-cost, default $1):
-npm run eval -- --prompt v2,v3 --model claude-sonnet-5-5,claude-haiku-5-5 --repeats 3 --max-cost 1
-```
-
-Other options: `--rooms bedroom-1,kitchen-2`, `--conditions none,known-shortest`, `--help`.
-Results go to `eval/results/<timestamp>/`: `report.md` (readable) and `results.json` (raw). They
-contain no images and can be committed.
-
-**Rule:** a prompt change becomes the default only after an eval run supports it.
-
 ### API
 
 `POST /api/estimate` with `multipart/form-data`: `images` (1–6 files), optional `roomName`, optional
@@ -194,51 +111,34 @@ contain no images and can be committed.
 `shortest` or `unknown`). Returns the same JSON as the CLI, or `{ "error": { "code", "message" } }`
 with a plain-language message.
 
-### Testing on your phone
+## Rebranding for a client
 
-1. Put the phone on the same Wi-Fi as your Mac.
-2. Run `npm run dev -- -H 0.0.0.0 -p 3000`.
-3. Find your Mac's IP with `ipconfig getifaddr en0` and open `http://<that IP>:3000` on the phone.
+Edit [`config/branding.json`](config/branding.json); no code changes:
 
-Next.js blocks its dev-server resources for hosts other than `localhost`. If it does, the page
-loads but nothing responds to taps. `next.config.ts` allows the usual home/office ranges
-(`192.168.*.*`, `10.*.*.*`) and `*.local` names through `allowedDevOrigins`. If your network uses
-something else (e.g. `172.16.x.x`), add it there and **restart the dev server**. The terminal shows a
-"Blocked cross-origin request" warning naming the host to add.
+```json
+{
+  "appName": "Acme Floor Planner",
+  "tagline": "Flooring budgets in minutes",
+  "primaryColor": "#1d4ed8",
+  "logoPath": "/acme-logo.svg"
+}
+```
 
-A production build skips this check: `npm run build && npm start -- -H 0.0.0.0`.
+- `primaryColor` is a hex colour for buttons and accents; text on it switches to black or white
+  automatically.
+- `logoPath` is a file you put in a `public/` folder at the project root (create it if needed), or
+  `null` for no logo.
+- The file is checked at startup; a typo gives a clear error naming the field. Restart `npm run dev`
+  after editing.
 
-## Editing the flooring catalog
+## Resetting local data
 
-Prices live in [`config/flooring-catalog.json`](config/flooring-catalog.json). They're entered by
-hand from Home Depot Canada or Rona (no scraping). The current entries are **placeholders**: generic
-names, made-up prices, and `"verified": false`. The app labels their prices as placeholders.
-
-To add a real product, copy an entry and fill in:
-
-| Field | Meaning |
-| --- | --- |
-| `id` | Unique, lowercase, e.g. `"rona-oak-5in-natural"` |
-| `name` | What users see in the dropdown |
-| `category` | `"hardwood"` (only option for now) |
-| `construction` | `"solid"` or `"engineered"` |
-| `plankWidthIn` | Plank width in inches, e.g. `3.25` |
-| `plankLengthIn` | Plank length in inches, or `null` if random lengths |
-| `randomLengths` | `true` if the box has mixed lengths (`plankLengthIn` can then be `null`) |
-| `sqftPerBox` | Coverage per box, from the box label or product page |
-| `pricePerSqft` | Price per sq ft in CAD, before tax |
-| `currency` | `"CAD"` |
-| `source` | `"Home Depot"`, `"Rona"`, or `"placeholder"` |
-| `sourceUrl` | Product page URL, or `null` |
-| `lastChecked` | Date you checked the price, `"YYYY-MM-DD"`, or `null` |
-| `verified` | `true` once you've confirmed the price yourself (not allowed with source `"placeholder"`) |
-
-Waste factors (extra material for cuts, by layout) and the default units are in
-[`config/settings.json`](config/settings.json).
-
-Both files are checked when the app starts. If something's wrong (a missing field, a negative price,
-a duplicate id), you get an error naming the file and field. Run `npm test` after editing to catch
-mistakes early.
+Projects live in this browser's local storage (key `flooring-estimator`), separately on each device
+and browser.
+- **In the app:** on the Projects screen, **Delete all saved data** (asks to confirm).
+- **By hand:** browser DevTools → Application → Local Storage → delete `flooring-estimator`.
+- If saved data is ever unreadable, the app starts fresh, shows a message, and keeps a copy under
+  `flooring-estimator:backup:<date>`.
 
 ## Project layout
 
