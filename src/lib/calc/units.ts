@@ -31,9 +31,10 @@ export function toFeet(value: number, unit: LengthUnit): number {
   }
 }
 
-/** Convert a Dimension (exact or range) to feet, preserving its shape. */
+/** Convert a Dimension (exact or range, with or without likely) to feet, preserving its shape. */
 export function dimensionToFeet(d: Dimension, unit: LengthUnit): Dimension {
-  return typeof d === "number"
-    ? toFeet(d, unit)
-    : { low: toFeet(d.low, unit), high: toFeet(d.high, unit) };
+  if (typeof d === "number") return toFeet(d, unit);
+  const out: Dimension = { low: toFeet(d.low, unit), high: toFeet(d.high, unit) };
+  if (d.likely !== undefined) out.likely = toFeet(d.likely, unit);
+  return out;
 }

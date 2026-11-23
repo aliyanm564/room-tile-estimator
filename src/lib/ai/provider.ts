@@ -4,8 +4,8 @@
 import { UserFacingError } from "@/lib/errors";
 import type { ProcessedImage } from "@/lib/images/preprocess";
 import type { ModelId } from "./models";
-import type { KnownMeasurement } from "./prompt";
-import type { AnalysisIssue, AnalysisMeta, ModelOutput, PhotoInfo, RoomAnalysis } from "./schema";
+import type { KnownMeasurement } from "./schema";
+import type { AnalysisIssue, AnalysisMeta, NormalizedOutput, PhotoInfo, RoomAnalysis } from "./schema";
 
 export interface AnalyzeOptions {
   roomName?: string;
@@ -51,7 +51,7 @@ export function photoInfo(images: ProcessedImage[]): PhotoInfo[] {
 /** Combine validated model output with our deterministic data. Shared by every provider. */
 export function buildRoomAnalysis(
   images: ProcessedImage[],
-  output: ModelOutput,
+  output: NormalizedOutput,
   meta: AnalysisMeta,
 ): RoomAnalysis {
   return {

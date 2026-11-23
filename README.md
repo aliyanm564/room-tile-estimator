@@ -3,11 +3,32 @@
 A tool for construction managers to estimate how much flooring a room needs and what it will cost.
 Hardwood first; other flooring types later. Estimates are for budgeting.
 
-**Current status: Phase 2.** The page is a manual calculator: type room measurements, get square
-footage, boxes and cost. Behind it, a photo analyzer (Claude's vision API) turns 1–6 room photos into
-estimated room dimensions with ranges and confidence. It's available as an API route and a command-line
-script. Connecting the two in the UI is Phase 3. See [CLAUDE.md](CLAUDE.md) for the roadmap and design
-decisions.
+**Current status: Phase 3.** Add photos of a room and/or measure its walls; the page estimates the
+room size (with a range and a confidence level), the square footage with waste, the boxes to buy and
+the cost. See [CLAUDE.md](CLAUDE.md) for the roadmap and design decisions.
+
+## How the estimate works
+
+The page has two optional wall fields, **Longer wall** and **Shorter wall**, in feet + inches or
+metres. Measure **wall to wall, not including closets** (closets are found in the photos and added
+separately, because flooring normally goes into closets).
+
+| You enter | What happens | Costs an AI call? |
+|---|---|---|
+| Both walls | The estimate appears instantly from your measurements. No photos needed. | **No** |
+| One wall + photos | The photos are analyzed with your wall as a "ruler"; the AI re-measures the other wall. Your wall is used exactly. | Yes, one |
+| Photos only | The AI estimates both walls from reference objects (doors, outlets, furniture). | Yes, one |
+| One wall, no photos | Add photos (or the second wall). | — |
+
+- After a result, editing a wall updates everything instantly, **without** a new AI call. If you add a
+  wall measurement after a photo-only result, it's applied right away, and a **Re-analyze with this
+  measurement** button lets the AI re-measure the other wall with it (one more call; usually more
+  accurate than the first guess).
+- Each dimension is marked **measured** or **estimated**. Estimated values show a range; the cost shows
+  the likely amount plus a rounded range.
+- One measured wall makes photo estimates much more accurate. Both walls make them exact.
+- Not yet supported: entering closet sizes by hand. With both walls measured and no photos, closets
+  aren't counted.
 
 ## Setup
 
@@ -54,7 +75,9 @@ npm run analyze -- --help
 ```
 
 It prints the JSON result (dimensions in feet as low / likely / high, issues, confidence, each photo's
-lens) followed by token usage and estimated cost. Accepts JPEG, PNG, WebP and iPhone HEIC; up to 6
+lens) followed by token usage and estimated cost. Each section is labelled `main` (the room), `closet`
+or `other`; `--known` is the main room only, wall to wall, excluding closets (`--which longest` or
+`shortest`). With `--json`, stdout is only the JSON; log lines go to stderr. Accepts JPEG, PNG, WebP and iPhone HEIC; up to 6
 photos, 20MB each. Location data (GPS) and all other metadata are removed before anything is sent.
 
 **Use the 1x camera.** Photos taken with the 0.5x ultra-wide lens make rooms look bigger; the result

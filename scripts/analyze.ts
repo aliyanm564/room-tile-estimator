@@ -46,6 +46,8 @@ async function main() {
     return;
   }
   if (positionals.length === 0) fail("give at least one photo path.");
+  // --json: stdout must be ONLY the JSON (for piping into the eval), so send log lines to stderr.
+  if (values.json) console.info = (...args: unknown[]) => console.error(...args);
 
   let knownMeasurement: KnownMeasurement | undefined;
   if (values.known !== undefined) {

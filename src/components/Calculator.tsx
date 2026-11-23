@@ -1,16 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FocusEvent } from "react";
-import { CalcError, estimateRoom } from "@/lib/calc";
+import { useMemo, useRef, useState } from "react";
+import type { RoomAnalysis } from "@/lib/ai/schema";
 import { pricePerSqftToPerSqm } from "@/lib/calc/units";
-import {
-  PRICE_SOURCE_LABEL,
-  formatArea,
-  formatCurrency,
-  formatNumber,
-  formatPercent,
-  formatRange,
-} from "@/lib/format";
+import { EstimateApiError, requestAnalysis } from "@/lib/estimate/api-client";
+import { buildEstimate, type Walls } from "@/lib/estimate/merge";
+import { createEstimateRunner } from "@/lib/estimate/run";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import {
   blurLength,
   blurPrice,
@@ -22,9 +18,11 @@ import {
   switchLengthUnits,
   switchPriceUnits,
   type LengthField,
-  type LengthPart,
 } from "@/lib/measurement-input";
-import type { FlooringProduct, Layout, RoomResult, Settings, UnitSystem } from "@/types";
+import type { FlooringProduct, Layout, Settings, UnitSystem } from "@/types";
+import EstimateResult from "./EstimateResult";
+import LengthInput from "./LengthInput";
+import PhotoPicker from "./PhotoPicker";
 import UnitsToggle from "./UnitsToggle";
 
 interface Props {
@@ -38,49 +36,78 @@ const LAYOUT_LABELS: Record<Layout, string> = {
   herringbone: "Herringbone",
 };
 
-type Outcome = { kind: "empty" } | { kind: "error"; message: string } | { kind: "ok"; result: RoomResult };
-
-/** True when focus is moving to somewhere outside this element (not between its own inputs). */
-const focusLeft = (e: FocusEvent<HTMLElement>) => !e.currentTarget.contains(e.relatedTarget as Node | null);
+const photosKey = (photos: File[]) => photos.map((f) => `${f.name}:${f.size}:${f.lastModified}`).join("|");
 
 export default function Calculator({ products, settings }: Props) {
   const [units, setUnits] = useState<UnitSystem>(settings.defaultUnits);
-  const [length, setLength] = useState<LengthField>(emptyLength);
-  const [width, setWidth] = useState<LengthField>(emptyLength);
+  const [longer, setLonger] = useState<LengthField>(emptyLength);
+  const [shorter, setShorter] = useState<LengthField>(emptyLength);
   const [productId, setProductId] = useState(products[0].id);
   const [layout, setLayout] = useState<Layout>("straight");
   const [price, setPrice] = useState(emptyPrice);
+  const [photos, setPhotos] = useState<File[]>([]);
+
+  const [analysis, setAnalysis] = useState<RoomAnalysis | null>(null);
+  const [analyzedPhotosKey, setAnalyzedPhotosKey] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // One runner for the component's lifetime: guarantees one API call at a time (each costs money).
+  const [run] = useState(() => createEstimateRunner<File>((p, km) => requestAnalysis(p, km)));
+  const longerRef = useRef<HTMLInputElement>(null);
+  const shorterRef = useRef<HTMLInputElement>(null);
 
   const product = products.find((p) => p.id === productId) ?? products[0];
+  const walls: Walls = { longerFt: longer.feet, shorterFt: shorter.feet };
+  const bothWalls = walls.longerFt !== null && walls.shorterFt !== null;
+  const photosChanged = analysis !== null && analyzedPhotosKey !== photosKey(photos);
 
-  // All math reads canonical values (feet, $/sq ft) — never the display text.
-  const outcome: Outcome = useMemo(() => {
-    if (length.feet === null || width.feet === null) return { kind: "empty" };
-    try {
-      const result = estimateRoom(
+  // Pure merge: recalculates instantly on every edit. Never calls the API.
+  const outcome = useMemo(
+    () =>
+      buildEstimate(
         {
-          unit: "ft",
-          sections: [{ length: length.feet, width: width.feet }],
+          analysis,
+          walls: { longerFt: longer.feet, shorterFt: shorter.feet },
           layout,
-          productId: product.id,
           priceOverridePerSqft: price.perSqft,
         },
         product,
         settings,
-      );
-      return { kind: "ok", result };
+      ),
+    [analysis, longer.feet, shorter.feet, layout, price.perSqft, product, settings],
+  );
+
+  async function analyze() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const key = photosKey(photos);
+    try {
+      const res = await run({ walls, photos });
+      if (res.analysis) {
+        setAnalysis(res.analysis);
+        setAnalyzedPhotosKey(key);
+      }
     } catch (e) {
-      if (e instanceof CalcError) return { kind: "error", message: e.message };
-      throw e;
+      setError(e instanceof EstimateApiError ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
     }
-  }, [length.feet, width.feet, layout, product, price.perSqft, settings]);
+  }
 
   function switchUnits(next: UnitSystem) {
     if (next === units) return;
-    setLength((f) => switchLengthUnits(f, next));
-    setWidth((f) => switchLengthUnits(f, next));
+    setLonger((f) => switchLengthUnits(f, next));
+    setShorter((f) => switchLengthUnits(f, next));
     setPrice((f) => switchPriceUnits(f, next));
     setUnits(next);
+  }
+
+  function focusWall(which: "longer" | "shorter") {
+    const el = (which === "longer" ? longerRef : shorterRef).current;
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus({ preventScroll: true });
   }
 
   const catalogPriceDisplay =
@@ -93,20 +120,32 @@ export default function Calculator({ products, settings }: Props) {
       <section className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
         <UnitsToggle value={units} onChange={switchUnits} />
 
-        <LengthInput
-          label="Room length"
-          field={length}
-          units={units}
-          onEdit={(part, text) => setLength((f) => editLength(f, units, part, text))}
-          onLeave={() => setLength((f) => blurLength(f, units))}
-        />
-        <LengthInput
-          label="Room width"
-          field={width}
-          units={units}
-          onEdit={(part, text) => setWidth((f) => editLength(f, units, part, text))}
-          onLeave={() => setWidth((f) => blurLength(f, units))}
-        />
+        <PhotoPicker photos={photos} onChange={setPhotos} disabled={busy} />
+
+        <div className="flex flex-col gap-4">
+          <LengthInput
+            label="Longer wall"
+            optional
+            field={longer}
+            units={units}
+            inputRef={longerRef}
+            onEdit={(part, text) => setLonger((f) => editLength(f, units, part, text))}
+            onLeave={() => setLonger((f) => blurLength(f, units))}
+          />
+          <LengthInput
+            label="Shorter wall"
+            optional
+            field={shorter}
+            units={units}
+            inputRef={shorterRef}
+            onEdit={(part, text) => setShorter((f) => editLength(f, units, part, text))}
+            onLeave={() => setShorter((f) => blurLength(f, units))}
+          />
+          <p className="-mt-2 text-sm text-stone-600">
+            Measure wall to wall, not including closets. One wall makes the photo estimate much more accurate; both
+            walls skip the photos entirely.
+          </p>
+        </div>
 
         <label className="flex flex-col gap-2">
           <span className="text-base font-semibold">Flooring</span>
@@ -157,130 +196,85 @@ export default function Calculator({ products, settings }: Props) {
               onBlur={() => setPrice((f) => blurPrice(f, units))}
               className="min-h-12 w-full rounded-xl px-3 text-lg ring-1 ring-stone-300"
             />
-            <span className="shrink-0 text-base text-stone-600">
-              {units === "metric" ? "per m²" : "per sq ft"}
-            </span>
+            <span className="shrink-0 text-base text-stone-600">{units === "metric" ? "per m²" : "per sq ft"}</span>
           </div>
           <span className="text-sm text-stone-600">Leave blank to use the catalog price.</span>
         </label>
+
+        {bothWalls ? (
+          <p className="rounded-xl bg-emerald-50 p-3 text-base font-medium text-emerald-900 ring-1 ring-emerald-200">
+            Both walls measured, no photos needed.
+          </p>
+        ) : (
+          <div>
+            <button
+              type="button"
+              onClick={analyze}
+              disabled={busy || photos.length === 0}
+              aria-busy={busy}
+              className="min-h-14 w-full rounded-xl bg-stone-900 px-4 text-lg font-semibold text-white disabled:bg-stone-300 disabled:text-stone-600"
+            >
+              {busy ? "Analyzing photos… about 15 seconds." : analysis ? "Re-analyze photos" : "Estimate"}
+            </button>
+            {photos.length === 0 && !busy && (
+              <p className="mt-2 text-sm text-stone-600">Add at least one photo, or measure both walls.</p>
+            )}
+          </div>
+        )}
       </section>
 
-      <Results outcome={outcome} units={units} />
-    </div>
-  );
-}
-
-function LengthInput({
-  label,
-  field,
-  units,
-  onEdit,
-  onLeave,
-}: {
-  label: string;
-  field: LengthField;
-  units: UnitSystem;
-  onEdit: (part: LengthPart, text: string) => void;
-  onLeave: () => void;
-}) {
-  const inputClass = "min-h-12 w-full rounded-xl px-3 text-lg ring-1 ring-stone-300";
-  const box = (part: LengthPart, unitLabel: string, ariaUnit: string, placeholder: string) => (
-    <label className="flex items-center gap-2">
-      <input
-        inputMode="decimal"
-        aria-label={`${label} ${ariaUnit}`}
-        placeholder={placeholder}
-        value={field.text[part]}
-        onChange={(e) => onEdit(part, e.target.value)}
-        className={inputClass}
-      />
-      <span className="text-base text-stone-600">{unitLabel}</span>
-    </label>
-  );
-
-  return (
-    // Tidy the display only when focus leaves the whole group, not when moving ft → in.
-    <fieldset onBlur={(e) => focusLeft(e) && onLeave()}>
-      <legend className="mb-2 text-base font-semibold">{label}</legend>
-      {units === "imperial" ? (
-        <div className="grid grid-cols-2 gap-2">
-          {box("ft", "ft", "feet", "12")}
-          {box("in", "in", "inches", "0")}
-        </div>
-      ) : (
-        box("m", "m", "metres", "3.6")
+      {error && (
+        <section role="alert" className="rounded-2xl bg-red-50 p-5 text-base text-red-900 ring-1 ring-red-200">
+          <p>{error}</p>
+          {!bothWalls && photos.length > 0 && (
+            <button
+              type="button"
+              onClick={analyze}
+              disabled={busy}
+              className="mt-3 min-h-12 rounded-xl bg-white px-4 font-semibold text-red-900 ring-1 ring-red-300"
+            >
+              Try again
+            </button>
+          )}
+        </section>
       )}
-    </fieldset>
-  );
-}
 
-function Results({ outcome, units }: { outcome: Outcome; units: UnitSystem }) {
-  if (outcome.kind === "empty") {
-    return (
-      <section className="rounded-2xl bg-stone-100 p-5 text-base text-stone-700">
-        Enter the room&apos;s length and width to see how much flooring you need.
-      </section>
-    );
-  }
-  if (outcome.kind === "error") {
-    return (
-      <section role="alert" className="rounded-2xl bg-red-50 p-5 text-base text-red-800 ring-1 ring-red-200">
-        {outcome.message}
-      </section>
-    );
-  }
-
-  const r = outcome.result;
-  const placeholder = r.priceSource === "placeholder";
-
-  return (
-    <section aria-live="polite" className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
-      <h2 className="mb-4 text-lg font-semibold">Estimate</h2>
-      <dl className="flex flex-col divide-y divide-stone-200">
-        <Row label="Floor area" value={formatArea(r.areaSqft, units)} />
-        <Row
-          label={`With ${formatPercent(r.wasteFactor)} extra for cuts`}
-          value={formatArea(r.sqftNeeded, units)}
+      {busy && !analysis ? (
+        <section className="rounded-2xl bg-stone-100 p-5 text-base text-stone-700" role="status">
+          Analyzing photos… about 15 seconds.
+        </section>
+      ) : outcome.status === "ok" ? (
+        <EstimateResult
+          estimate={outcome.estimate}
+          units={units}
+          onEdit={focusWall}
+          onReanalyze={analyze}
+          busy={busy}
+          photosChanged={photosChanged && !bothWalls}
         />
-        <Row
-          label="Boxes to buy"
-          value={formatRange(r.boxes)}
-          note={`That's ${formatArea(r.purchasedSqft, units)} of flooring`}
-          big
-        />
-        {r.approxPlanks && <Row label="Planks (approx.)" value={`≈ ${formatRange(r.approxPlanks)}`} />}
-        <Row
-          label="Material cost"
-          value={formatRange(r.cost, (n) => formatCurrency(n, r.currency))}
-          note={`${formatCurrency(
-            units === "metric" ? pricePerSqftToPerSqm(r.pricePerSqft) : r.pricePerSqft,
-            r.currency,
-          )} ${units === "metric" ? "per m²" : "per sq ft"} · whole boxes`}
-          big
-        />
-      </dl>
-      <p
-        className={`mt-4 rounded-xl p-3 text-sm ${
-          placeholder ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-stone-100 text-stone-700"
-        }`}
-      >
-        <strong>Price:</strong> {PRICE_SOURCE_LABEL[r.priceSource]}
-      </p>
-      <p className="mt-3 text-sm text-stone-600">
-        Budget estimate for flooring material only. Doesn&apos;t include underlay, trim, installation, or tax.
-      </p>
-    </section>
-  );
-}
-
-function Row({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-3">
-      <dt className="text-base text-stone-700">
-        {label}
-        {note && <span className="block text-sm text-stone-500">{note}</span>}
-      </dt>
-      <dd className={`shrink-0 text-right font-semibold tabular-nums ${big ? "text-2xl" : "text-lg"}`}>{value}</dd>
+      ) : outcome.status === "unusable" ? (
+        <section role="alert" className="rounded-2xl bg-amber-50 p-5 text-base text-amber-950 ring-1 ring-amber-200">
+          <h2 className="text-lg font-semibold">We couldn&apos;t estimate from these photos</h2>
+          <ul className="mt-2 list-disc pl-5">
+            {outcome.issues.map((i, k) => (
+              <li key={k}>{i.message}</li>
+            ))}
+          </ul>
+          <p className="mt-3 text-sm">Fix the photos above and press Re-analyze, or measure both walls instead.</p>
+        </section>
+      ) : outcome.status === "invalid" ? (
+        <section role="alert" className="rounded-2xl bg-red-50 p-5 text-base text-red-800 ring-1 ring-red-200">
+          {outcome.message}
+        </section>
+      ) : (
+        <section className="rounded-2xl bg-stone-100 p-5 text-base text-stone-700">
+          {photos.length > 0
+            ? "Press Estimate to analyze your photos."
+            : outcome.status === "needs_photos"
+              ? "Add photos so the other wall can be estimated, or measure both walls."
+              : "Add photos of the room, or measure both walls, to see how much flooring you need."}
+        </section>
+      )}
     </div>
   );
 }

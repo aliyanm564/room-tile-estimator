@@ -11,7 +11,7 @@ describe("flooring quantities", () => {
   });
 
   it("boxes round up", () => {
-    expect(boxesNeeded(exact(101), 20)).toEqual({ low: 6, high: 6 });
+    expect(boxesNeeded(exact(101), 20)).toEqual({ low: 6, likely: 6, high: 6 });
     expect(boxesNeeded(exact(100.01), 20).low).toBe(6);
   });
 
@@ -23,12 +23,12 @@ describe("flooring quantities", () => {
   });
 
   it("purchased sq ft = boxes × sqftPerBox", () => {
-    expect(purchasedSqft({ low: 5, high: 7 }, 20)).toEqual({ low: 100, high: 140 });
+    expect(purchasedSqft({ low: 5, high: 7 }, 20)).toEqual({ low: 100, likely: 120, high: 140 });
   });
 
   it("approximate planks for fixed lengths, null for random lengths", () => {
     // 5" × 48" = 1.6667 sq ft/plank → 110 / 1.6667 = 66
-    expect(approxPlanks(exact(110), 5, 48, false)).toEqual({ low: 66, high: 66 });
+    expect(approxPlanks(exact(110), 5, 48, false)).toEqual({ low: 66, likely: 66, high: 66 });
     expect(approxPlanks(exact(110), 3.25, null, true)).toBeNull();
     expect(approxPlanks(exact(110), 3.25, 84, true)).toBeNull();
   });

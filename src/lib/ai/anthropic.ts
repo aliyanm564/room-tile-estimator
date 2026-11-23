@@ -8,6 +8,7 @@ import { PROMPT_VERSION, SYSTEM_PROMPT, buildRetryMessage, buildUserContent } fr
 import { AnalysisError, buildRoomAnalysis, type AnalyzeOptions, type RoomAnalyzer } from "./provider";
 import {
   ModelOutputSchema,
+  normalizeModelOutput,
   validateModelOutput,
   type RoomAnalysis,
   type ValidationResult,
@@ -172,12 +173,16 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
           const result: ValidationResult =
             raw === undefined
               ? { success: false, errors: ["(root): response was not valid JSON"] }
-              : validateModelOutput(raw, images.length);
+              : validateModelOutput(raw);
           if (result.success) {
+            // Fix what code can fix: never spend a second call on it.
+            const { output, changes } = normalizeModelOutput(result.data, images.length);
+            if (changes.length) log(`[ai] normalized: ${changes.join("; ")}`);
             const estimatedCostUsd = logUsage(attempt, "ok");
-            return buildRoomAnalysis(images, result.data, {
+            return buildRoomAnalysis(images, output, {
               model,
               promptVersion: PROMPT_VERSION,
+              knownMeasurement: options.knownMeasurement ?? null,
               inputTokens,
               outputTokens,
               estimatedCostUsd,
@@ -188,7 +193,7 @@ export function createAnthropicAnalyzer(deps: AnthropicAnalyzerDeps = {}): RoomA
           errors = result.errors;
         }
 
-        log(`[ai] attempt ${attempt} failed validation: ${errors.join("; ")}`);
+        log(`[ai] attempt ${attempt} unusable: ${errors.join("; ")}`);
         if (attempt === MAX_ATTEMPTS) {
           logUsage(attempt, "invalid_output");
           throw new AnalysisError(
