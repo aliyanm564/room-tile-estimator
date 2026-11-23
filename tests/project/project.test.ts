@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadConfig } from "@/lib/catalog";
 import { addRanges } from "@/lib/calc/range";
+import { boxLines } from "@/components/app/labels";
 import {
   SCHEMA_VERSION,
   addRoom,
@@ -98,6 +99,35 @@ describe("house total", () => {
     expect(total.pendingRooms).toBe(1);
     expect(total.boxesByProduct).toHaveLength(3); // boxes only add up per product
     expect(total.anyPlaceholderPrice).toBe(true);
+  });
+
+  it("boxes are listed per flooring product (different products are never summed)", () => {
+    // Two measured oak rooms + one maple room.
+    const room = (name: string, productId: string, longerFt: number, shorterFt: number) => ({
+      ...newRoom(name, { productId }),
+      walls: { longerFt, shorterFt },
+    });
+    const rooms = [room("A", "eng-oak-5", 12, 10), room("B", "eng-oak-5", 10, 8), room("C", "solid-maple-5", 9, 9)];
+    const total = houseTotal(rooms.map((r) => ({ productId: r.productId, outcome: roomOutcome(r, products, settings) })));
+    // Straight 10% waste, whole boxes: A 132 sq ft / 20 → 7, B 88 / 20 → 5 (oak = 12); C 89.1 / 23.5 → 4.
+    expect(total.boxesByProduct).toEqual([
+      { productId: "eng-oak-5", boxes: { low: 12, likely: 12, high: 12 } },
+      { productId: "solid-maple-5", boxes: { low: 4, likely: 4, high: 4 } },
+    ]);
+    expect(boxLines(total.boxesByProduct, products)).toEqual([
+      'Engineered White Oak, 5" × 48": 12 boxes',
+      'Solid Hard Maple Plank, 5": 4 boxes',
+    ]);
+    // A range is shown in brackets; one box is singular.
+    expect(
+      boxLines(
+        [
+          { productId: "eng-oak-5", boxes: { low: 22, likely: 24, high: 26 } },
+          { productId: "eng-oak-7", boxes: { low: 1, likely: 1, high: 1 } },
+        ],
+        products,
+      ),
+    ).toEqual(['Engineered White Oak, 5" × 48": 24 boxes (22 – 26)', 'Engineered European Oak, 7" × 72": 1 box']);
   });
 
   it("no estimated rooms → null totals", () => {

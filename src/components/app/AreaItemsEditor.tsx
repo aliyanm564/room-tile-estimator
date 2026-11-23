@@ -5,6 +5,7 @@ import type { AreaEdits, AreaItem, AreaSize } from "@/lib/estimate/merge";
 import { formatAreaValue, formatLength } from "@/lib/format";
 import { blurLength, editLength, lengthDisplayText, type LengthField } from "@/lib/measurement-input";
 import { newId } from "@/lib/project/model";
+import { selectAllOnFocus } from "@/lib/select-on-focus";
 import type { UnitSystem } from "@/types";
 import LengthInput from "../LengthInput";
 import { PrimaryButton, SecondaryButton, SourceBadge } from "./ui";
@@ -49,11 +50,11 @@ function SizeForm({
       {withLabel && (
         <label className="flex flex-col gap-1">
           <span className="text-sm font-semibold">Name</span>
-          <input aria-label="Closet name" value={label} maxLength={40} onChange={(e) => setLabel(e.target.value)} className="min-h-12 rounded-xl px-3 text-lg ring-1 ring-stone-300" />
+          <input aria-label="Closet name" value={label} maxLength={40} onChange={(e) => setLabel(e.target.value)} {...selectAllOnFocus} className="min-h-12 rounded-xl px-3 text-lg ring-1 ring-stone-300" />
         </label>
       )}
-      <LengthInput label="Width (along the wall)" field={width} units={units} onEdit={(p, t) => setWidth((f) => editLength(f, units, p, t))} onLeave={() => setWidth((f) => blurLength(f, units))} />
-      <LengthInput label="Depth" field={depth} units={units} onEdit={(p, t) => setDepth((f) => editLength(f, units, p, t))} onLeave={() => setDepth((f) => blurLength(f, units))} />
+      <LengthInput selectOnFocus label="Width (along the wall)" field={width} units={units} onEdit={(p, t) => setWidth((f) => editLength(f, units, p, t))} onLeave={() => setWidth((f) => blurLength(f, units))} />
+      <LengthInput selectOnFocus label="Depth" field={depth} units={units} onEdit={(p, t) => setDepth((f) => editLength(f, units, p, t))} onLeave={() => setDepth((f) => blurLength(f, units))} />
       {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <PrimaryButton type="submit">{submitLabel}</PrimaryButton>

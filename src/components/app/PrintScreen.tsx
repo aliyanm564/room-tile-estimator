@@ -5,7 +5,7 @@ import { formatCostRange, formatCurrency, formatLength, formatNumber } from "@/l
 import { houseTotal, roomOutcome, type StoredProject } from "@/lib/project/model";
 import { sqftToSqm } from "@/lib/calc/units";
 import type { FlooringProduct, Settings, UnitSystem } from "@/types";
-import { LAYOUT_LABELS, productName } from "./labels";
+import { LAYOUT_LABELS, boxLines, productName } from "./labels";
 import { href } from "./router";
 import { BackLink, Disclaimer, PrimaryButton } from "./ui";
 
@@ -121,6 +121,16 @@ export default function PrintScreen({
         </table>
       </div>
 
+      {total.cost && (
+        <div className="text-sm text-stone-800">
+          <p className="font-semibold">Boxes to order, by flooring:</p>
+          <ul className="list-disc pl-5 tabular-nums">
+            {boxLines(total.boxesByProduct, products).map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!total.cost && <p className="text-base text-stone-700">No room in this project has an estimate yet.</p>}
       {pending.length > 0 && (
         <p className="text-sm text-stone-700">

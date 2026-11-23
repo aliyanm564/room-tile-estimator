@@ -18,7 +18,7 @@ import { projectStore } from "@/lib/project/store";
 import { sqftToSqm } from "@/lib/calc/units";
 import type { FlooringProduct, Settings, UnitSystem } from "@/types";
 import UnitsToggle from "../UnitsToggle";
-import { STATUS, productName } from "./labels";
+import { STATUS, boxLines, productName } from "./labels";
 import { href, navigate } from "./router";
 import { Badge, BackLink, Card, ConfirmDelete, Disclaimer, EditableName, LinkButton, Notice, PrimaryButton, SecondaryButton } from "./ui";
 
@@ -68,6 +68,11 @@ export default function ProjectScreen({ project, products, settings }: { project
               {area(total.sqftNeeded!.likely, units)} of flooring incl. waste · {total.includedRooms} of {project.rooms.length} room
               {project.rooms.length === 1 ? "" : "s"}
             </p>
+            <ul aria-label="Boxes by flooring" className="mt-2 flex flex-col gap-0.5 text-base text-stone-800 tabular-nums">
+              {boxLines(total.boxesByProduct, products).map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
             {total.anyPlaceholderPrice && (
               <p className="mt-2 text-sm text-amber-800">Includes placeholder prices, not real quotes.</p>
             )}

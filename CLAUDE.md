@@ -151,7 +151,7 @@ the shorter one (`"shortest"`). A manual value is exact (low = likely = high).
   Display: headline cost to the cent; cost range in $10 steps rounded OUTWARD (low down, high up) so the
   headline is always inside it; "About 12½ × 9 ft" to the nearest half foot (metric 0.1 m).
 - **Closets & built-ins (Phase 5, `AreaEdits`):** AI-detected closets / extra areas / built-ins can be
-  edited (width × depth, exact → "measured") or removed (kept in the list for undo), and closets can be
+  edited (width × depth, exact → "measured"; the fields select their value on focus, so typing replaces it) or removed (kept in the list for undo), and closets can be
   added by hand. Edits are keyed `section:<i>` / `obstacle:<i>` into the analysis and are **cleared when
   the room is re-analyzed**; manual closets are kept. Both walls + manual closets = a fully measured
   estimate with no AI call (this closed the Phase 3 gap).
@@ -219,7 +219,7 @@ the shorter one (`"shortest"`). A manual value is exact (low = likely = high).
   badges, confidence, "Scale from", warnings, tips, price source (placeholder flagged), and the
   disclaimer (`src/lib/disclaimer.ts`) everywhere results appear, including print.
 - **House total** = sum of the rooms' low, likely and high (`houseTotal()`); rooms without an estimate
-  are flagged and excluded. Boxes are only totalled per product.
+  are flagged and excluded. Boxes are listed per flooring product (`boxLines()`), never summed across products.
 - **Print / PDF:** the browser's print on the Print screen (`print:` Tailwind variants + `@media print`
   in `globals.css`); no PDF library.
 
