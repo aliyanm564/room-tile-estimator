@@ -1,4 +1,4 @@
-import type { Range } from "@/types";
+import type { Range, ResultRange } from "@/types";
 import { CalcError } from "./errors";
 import { mapRange } from "./range";
 
@@ -17,7 +17,7 @@ function assertPositive(n: number, label: string) {
 }
 
 /** sqftNeeded = area × (1 + waste). */
-export function sqftNeeded(areaSqft: Range, wasteFactor: number): Range {
+export function sqftNeeded(areaSqft: Range, wasteFactor: number): ResultRange {
   if (!Number.isFinite(wasteFactor) || wasteFactor < 0) {
     throw new CalcError("Waste factor must be zero or more.");
   }
@@ -25,13 +25,13 @@ export function sqftNeeded(areaSqft: Range, wasteFactor: number): Range {
 }
 
 /** Whole boxes needed to cover sqftNeeded. */
-export function boxesNeeded(needed: Range, sqftPerBox: number): Range {
+export function boxesNeeded(needed: Range, sqftPerBox: number): ResultRange {
   assertPositive(sqftPerBox, "Square feet per box");
   return mapRange(needed, (n) => ceilSafe(n / sqftPerBox));
 }
 
 /** What you actually buy: boxes × sqftPerBox. */
-export function purchasedSqft(boxes: Range, sqftPerBox: number): Range {
+export function purchasedSqft(boxes: Range, sqftPerBox: number): ResultRange {
   return mapRange(boxes, (b) => b * sqftPerBox);
 }
 
@@ -44,7 +44,7 @@ export function approxPlanks(
   plankWidthIn: number,
   plankLengthIn: number | null,
   randomLengths: boolean,
-): Range | null {
+): ResultRange | null {
   if (randomLengths || plankLengthIn == null) return null;
   assertPositive(plankWidthIn, "Plank width");
   assertPositive(plankLengthIn, "Plank length");

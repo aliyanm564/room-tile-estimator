@@ -1,4 +1,4 @@
-import type { FlooringProduct, PriceSource, Range } from "@/types";
+import type { FlooringProduct, PriceSource, Range, ResultRange } from "@/types";
 import { CalcError } from "./errors";
 import { mapRange } from "./range";
 
@@ -26,6 +26,6 @@ export function resolvePrice(
 }
 
 /** You pay for whole boxes: cost = purchasedSqft × pricePerSqft. */
-export function materialCost(purchasedSqft: Range, pricePerSqft: number): Range {
+export function materialCost(purchasedSqft: Range, pricePerSqft: number): ResultRange {
   return mapRange(purchasedSqft, (s) => s * pricePerSqft);
 }

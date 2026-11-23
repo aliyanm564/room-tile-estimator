@@ -1,12 +1,22 @@
 // Shared domain types. Calc code works internally in feet / square feet.
 
-/** An exact measurement, or an uncertain one expressed as a low/high range. */
-export type Dimension = number | { low: number; high: number };
+/**
+ * An exact measurement, or an uncertain one: a low/high range with an optional best guess
+ * ("likely"). Without likely, the midpoint is used.
+ */
+export type Dimension = number | { low: number; high: number; likely?: number };
 
-/** Normalised range. For exact inputs, low === high. */
+/** A range. For exact inputs, low === likely === high. */
 export interface Range {
   low: number;
   high: number;
+  /** Best estimate, low ≤ likely ≤ high. Optional on input; always set on calc results. */
+  likely?: number;
+}
+
+/** A range as returned by the calculator: likely is always present. Headline numbers use likely. */
+export interface ResultRange extends Range {
+  likely: number;
 }
 
 export type LengthUnit = "ft" | "in" | "m";
@@ -42,21 +52,21 @@ export interface RoomResult {
   productId: string;
   /** True if any input dimension was a range (low and high differ). */
   isRange: boolean;
-  grossAreaSqft: Range;
-  obstacleAreaSqft: Range;
+  grossAreaSqft: ResultRange;
+  obstacleAreaSqft: ResultRange;
   /** Floor area to cover (sections minus obstacles). */
-  areaSqft: Range;
+  areaSqft: ResultRange;
   wasteFactor: number;
   /** areaSqft × (1 + waste). */
-  sqftNeeded: Range;
-  boxes: Range;
+  sqftNeeded: ResultRange;
+  boxes: ResultRange;
   /** boxes × sqftPerBox — what you actually buy. */
-  purchasedSqft: Range;
+  purchasedSqft: ResultRange;
   /** Approximate plank count; null when the product ships in random lengths. */
-  approxPlanks: Range | null;
+  approxPlanks: ResultRange | null;
   pricePerSqft: number;
   priceSource: PriceSource;
-  cost: Range;
+  cost: ResultRange;
   currency: "CAD";
 }
 

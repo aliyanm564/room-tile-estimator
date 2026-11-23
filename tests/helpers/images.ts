@@ -71,7 +71,17 @@ export function fakeProcessed(lens: ProcessedImage["lens"] = "standard", name = 
   };
 }
 
-const r = (low: number, likely: number, high: number) => ({ low, likely, high });
+export const r = (low: number, likely: number, high: number) => ({ low, likely, high });
+
+type R = ReturnType<typeof r>;
+
+/** A model section. Defaults: label "main", no known measurement applied. */
+export const sec = (
+  lengthFt: R,
+  widthFt: R,
+  label: "main" | "closet" | "other" = "main",
+  knownMeasurementAppliedTo: "length" | "width" | null = null,
+) => ({ label, lengthFt, widthFt, knownMeasurementAppliedTo });
 
 /** A valid model output for a 12×10 ft bedroom. */
 export function validOutput(overrides: Partial<ModelOutput> = {}): ModelOutput {
@@ -80,7 +90,7 @@ export function validOutput(overrides: Partial<ModelOutput> = {}): ModelOutput {
     issues: [],
     roomType: "bedroom",
     shape: "rectangle",
-    sections: [{ lengthFt: r(11, 12, 13), widthFt: r(9.5, 10, 10.5) }],
+    sections: [sec(r(11, 12, 13), r(9.5, 10, 10.5))],
     obstacles: [],
     scaleReferences: [{ object: "interior door", assumedSize: "80 in tall", photoIndex: 1 }],
     confidence: "medium",

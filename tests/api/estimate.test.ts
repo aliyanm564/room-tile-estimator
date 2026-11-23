@@ -13,7 +13,7 @@ vi.mock("@/lib/ai", async (importOriginal) => ({
 
 const { POST } = await import("@/app/api/estimate/route");
 
-const meta = { model: "claude-sonnet-5-5" as const, promptVersion: "test", inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0, durationMs: 1, attempts: 1 };
+const meta = { model: "claude-sonnet-5-5" as const, promptVersion: "test", knownMeasurement: null, inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0, durationMs: 1, attempts: 1 };
 
 async function post(fields: Record<string, string | File | File[]>) {
   const form = new FormData();

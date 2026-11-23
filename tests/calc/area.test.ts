@@ -5,7 +5,7 @@ import { CalcError } from "@/lib/calc/errors";
 describe("roomAreaSqft", () => {
   it("simple rectangle", () => {
     const a = roomAreaSqft([{ length: 12, width: 10 }], [], "ft");
-    expect(a.net).toEqual({ low: 120, high: 120 });
+    expect(a.net).toEqual({ low: 120, likely: 120, high: 120 });
   });
 
   it("L-shaped room = two sections summed", () => {
@@ -25,7 +25,7 @@ describe("roomAreaSqft", () => {
   it("subtracts obstacles", () => {
     const a = roomAreaSqft([{ length: 20, width: 15 }], [{ length: 8, width: 4 }], "ft");
     expect(a.obstacles.low).toBe(32);
-    expect(a.net).toEqual({ low: 268, high: 268 });
+    expect(a.net).toEqual({ low: 268, likely: 268, high: 268 });
   });
 
   it("range dimensions give low ≤ high, with obstacle ranges subtracted worst-case", () => {

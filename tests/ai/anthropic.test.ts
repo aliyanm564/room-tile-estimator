@@ -5,7 +5,7 @@ import { estimateCostUsd } from "@/lib/ai/models";
 import { PROMPT_VERSION, SYSTEM_PROMPT, buildUserContent } from "@/lib/ai/prompt";
 import { AnalysisError } from "@/lib/ai/provider";
 import type { ModelOutput } from "@/lib/ai/schema";
-import { fakeProcessed, validOutput } from "../helpers/images";
+import { fakeProcessed, r, sec, validOutput } from "../helpers/images";
 
 const KEY_ENV = { ANTHROPIC_API_KEY: "test-key" };
 
@@ -63,7 +63,9 @@ describe("Anthropic analyzer", () => {
     const texts = content.filter((b): b is Anthropic.TextBlockParam => b.type === "text").map((b) => b.text);
     expect(texts[0]).toMatch(/^Photo 1 of 2 — standard lens \(1x, 26mm/);
     expect(texts[1]).toMatch(/^Photo 2 of 2 — ultra-wide lens \(0\.5x/);
-    expect(texts.at(-1)).toMatch(/Main bedroom[\s\S]*14 ft — the room's longest floor dimension/);
+    expect(texts.at(-1)).toMatch(
+      /Main bedroom[\s\S]*ruler\): 14 ft — the main room's longer floor dimension, wall to wall, not including closets/,
+    );
 
     expect(result.roomType).toBe("bedroom");
     expect(result.photos.map((p) => [p.index, p.name, p.lens])).toEqual([
@@ -76,6 +78,7 @@ describe("Anthropic analyzer", () => {
       inputTokens: 1000,
       outputTokens: 500,
       attempts: 1,
+      knownMeasurement: { valueFt: 14, which: "longest" }, // echoed by our code for the merge
     });
     expect(result.meta.estimatedCostUsd).toBeCloseTo(estimateCostUsd("claude-sonnet-5-5", 1000, 500), 12);
   });
@@ -104,7 +107,7 @@ describe("Anthropic analyzer", () => {
   });
 
   it("invalid output triggers exactly one retry that includes the validation error", async () => {
-    const bad = validOutput({ sections: [{ lengthFt: { low: 13, likely: 12, high: 11 }, widthFt: { low: 9, likely: 10, high: 11 } }] });
+    const bad = validOutput({ sections: [sec(r(13, 12, 11), r(9, 10, 11))] });
     const { client, create } = fakeClient(message(JSON.stringify(bad), { inTok: 1000, outTok: 400 }), message(JSON.stringify(validOutput()), { inTok: 1500, outTok: 300 }));
     const analyzer = createAnthropicAnalyzer({ client, env: KEY_ENV, log: quiet });
 
@@ -193,6 +196,20 @@ describe("Anthropic analyzer", () => {
   it("prompt never asks for prices or quantities, and labels known-measurement 'unknown' correctly", () => {
     expect(SYSTEM_PROMPT).toMatch(/Never estimate prices, costs, number of boxes/);
     const last = buildUserContent([fakeProcessed()], { knownMeasurement: { valueFt: 10, which: "unknown" } }).at(-1);
-    expect(last).toMatchObject({ type: "text", text: expect.stringMatching(/10 ft — one wall, which one is not specified/) });
+    expect(last).toMatchObject({ type: "text", text: expect.stringMatching(/10 ft — one wall of the main room \(which one is not specified\)/) });
+    expect(SYSTEM_PROMPT).toMatch(/never ask questions/);
+    expect(SYSTEM_PROMPT).toMatch(/"closet"/);
+    expect(SYSTEM_PROMPT).toMatch(/Do NOT just scale your earlier proportions/);
+  });
+
+  it("code-fixable problems are normalized without a second call", async () => {
+    const messy = validOutput({ notes: ["Is the closet included?", "A doorway photo would help."] });
+    const { client, create } = fakeClient(json(messy));
+    const lines: string[] = [];
+    const result = await createAnthropicAnalyzer({ client, env: KEY_ENV, log: (l) => lines.push(l) }).analyzeRoom([fakeProcessed()]);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(result.notes).toEqual(["A doorway photo would help."]);
+    expect(result.meta.attempts).toBe(1);
+    expect(lines.join("\n")).toMatch(/normalized: dropped 1 note/);
   });
 });

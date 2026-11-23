@@ -1,19 +1,19 @@
-import type { LengthUnit, Range, Rect } from "@/types";
+import type { LengthUnit, Rect, ResultRange } from "@/types";
 import { CalcError } from "./errors";
 import { multiplyRanges, subtractRanges, sumRanges, toRange } from "./range";
 import { dimensionToFeet } from "./units";
 
 /** Area of one rectangle in sq ft. */
-export function rectAreaSqft(rect: Rect, unit: LengthUnit, label = "Section"): Range {
+export function rectAreaSqft(rect: Rect, unit: LengthUnit, label = "Section"): ResultRange {
   const length = toRange(dimensionToFeet(rect.length, unit), `${label} length`);
   const width = toRange(dimensionToFeet(rect.width, unit), `${label} width`);
   return multiplyRanges(length, width);
 }
 
 export interface RoomArea {
-  gross: Range;
-  obstacles: Range;
-  net: Range;
+  gross: ResultRange;
+  obstacles: ResultRange;
+  net: ResultRange;
 }
 
 /**
