@@ -51,17 +51,55 @@ Estimates are for **budgeting**, but should be as accurate as possible. Show unc
 - **Precision:** keep full precision internally; round only in formatting helpers
   (`src/lib/format.ts`).
 
+## AI room analysis (Phase 2)
+- **Flow:** `analyzeRoomPhotos()` in `src/lib/ai/index.ts` = `preprocessImages()` → `RoomAnalyzer.analyzeRoom()`.
+  Used by `POST /api/estimate` (multipart: `images` 1–6, `roomName`, `knownMeasurement` JSON) and by
+  `npm run analyze` (`scripts/analyze.ts` → `src/lib/ai/analyze-files.ts`, the base for the Phase 4 eval).
+- **Images** (`src/lib/images/`): JPEG/PNG/WebP/HEIC, max 6, max 20MB each (checked before decoding).
+  HEIC is decoded with `heic-decode` (sharp's prebuilt binaries can't decode HEVC). EXIF orientation is
+  applied, then **all metadata is stripped** (GPS of customers' homes must never leave the server). Long
+  edge ≤ 1568px, JPEG q85. The **only** metadata read is lens info (`FocalLengthIn35mmFilm`, fallback:
+  explicit "ultra wide"/"telephoto" in `LensModel`; never the word "wide" alone, since iPhone main
+  lenses report "dual wide camera").
+- **Lens:** < 20mm-equiv = `ultra_wide` (0.5x), > 40mm = `telephoto`, else `standard`; no data =
+  `unknown` (no warning). Ultra-wide distorts and exaggerates depth. Our code (not the model) adds a
+  deterministic `ultra_wide_lens` issue; the lens is also given to the model in each "Photo N" label.
+- **Schema** (`src/lib/ai/schema.ts`), all lengths in feet, every dimension `{ low, likely, high }`:
+  `usable`, `issues[] {code, message, photoIndex}`, `roomType`, `shape` (rectangle → 1 section,
+  l_shape → 2, irregular → ≥1), `sections[] {lengthFt, widthFt}`, `obstacles[] {label, lengthFt,
+  widthFt}` (permanent built-ins only), `scaleReferences[]`, `confidence` + `confidenceReason`,
+  `existingFloor`, `notes` (≤ 3). Our code adds `photos[]` (incl. lens) and `meta` (model, prompt
+  version, tokens, estimated cost, duration, attempts). `toCalcRect()` maps sections onto calc input.
+  - `ModelOutputSchema` (structure only) goes to the API as structured output; `validateModelOutput()`
+    enforces the rules JSON Schema can't (low ≤ likely ≤ high, section counts, photo index range).
+- **Prompt versioning:** `PROMPT_VERSION` in `src/lib/ai/prompt.ts` (format `YYYY-MM-DD.N`). **Bump it on
+  every change** to the system prompt, user-message wording, or schema; Phase 4 compares versions.
+- **Anthropic call** (`src/lib/ai/anthropic.ts`): structured outputs via `output_config.format`
+  (forced `tool_choice` returns 400 on Sonnet 5.5). Adaptive thinking (default; can't be disabled on
+  Sonnet 5.5), `effort: "high"`. **No refusal fallbacks**: results always come from the requested
+  model; a refusal is a friendly error. Invalid output → exactly one retry with the validation errors.
+  SDK `maxRetries: 1` covers 429/529/5xx; timeout 180s. SDK pinned at 1.6.0 (sends the key as
+  `Authorization: Bearer`). Prices for cost logs in `src/lib/ai/models.ts`; verify against the
+  pricing page.
+- **Errors:** `UserFacingError` (`src/lib/errors.ts`) has `userMessage` (safe for clients) and `message`
+  (log detail). The route only ever returns `{ error: { code, message: userMessage } }`.
+- **Tests never call the API:** `tests/setup.ts` removes the key and points the SDK at a closed port;
+  tests inject fake clients / fake `fetch`.
+- `tests/fixtures/rooms/` holds photos of real homes: **gitignored, never commit**.
+
 ## v1 UX (target, built in Phase 5)
 - Project → rooms, **room by room** (not bulk upload).
 - Up to **6 photos per room** with a guided shot checklist + optional known-wall measurement.
+- The photo checklist must tell users to **use the 1x camera, not 0.5x (ultra-wide)**: ultra-wide makes
+  rooms look bigger. Show the `ultra_wide_lens` issue next to the affected photo.
 - Phone-first (camera capture), but laptop file upload must work.
 - Projects stored in the browser (**localStorage**). No database, no auth in v1.
 - Plain language, large tap targets.
 
 ## Phases
-1. **Scaffold + manual calculator + unit tests** ← CURRENT
-2. API route: room photos → Claude vision → validated JSON (dimensions, confidence, scale reference)
-3. Merge AI estimates with manual overrides; show ranges + confidence
+1. Scaffold + manual calculator + unit tests ✅
+2. API route: room photos → Claude vision → validated JSON (dimensions, confidence, scale reference) ✅
+3. **Merge AI estimates with manual overrides; show ranges + confidence** ← NEXT
 4. Accuracy eval against test photos with known dimensions
 5. UX polish: project → rooms flow, guided photo checklist, mobile-first
 6. Deployment
@@ -74,8 +112,14 @@ Estimates are for **budgeting**, but should be as accurate as possible. Show unc
 - `src/lib/measurement-input.ts` — form state for lengths/price: one canonical value at full
   precision (feet, $/sq ft); text kept exactly as typed; text re-rendered only on unit switch or blur
 - `src/components/` — `Calculator.tsx`, `UnitsToggle.tsx` (client components)
+- `src/lib/images/` — `preprocess.ts` (limits, HEIC, orientation, strip, resize), `lens.ts`
+- `src/lib/ai/` — `provider.ts` (interface), `anthropic.ts`, `schema.ts`, `prompt.ts`, `models.ts`,
+  `index.ts` (`analyzeRoomPhotos`, `getAnalyzer`), `analyze-files.ts` (CLI / eval)
+- `src/app/api/estimate/route.ts` — POST photos → RoomAnalysis
+- `scripts/analyze.ts` — CLI (`npm run analyze`)
 - `src/types/` — shared types (RoomInput, RoomResult, FlooringProduct, Settings, Project, Room)
-- `tests/` — Vitest tests (`tests/calc/` for calculator, `tests/catalog.test.ts` for config)
+- `tests/` — Vitest: `calc/`, `images/`, `ai/`, `api/`; `helpers/images.ts` generates synthetic photos;
+  `fixtures/images/two-tone.heic` is a synthetic HEIC (made with macOS `sips`)
 
 ## Conventions
 - Calc = small **pure** functions: no React, no I/O, no `Date.now()`.
