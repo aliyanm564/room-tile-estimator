@@ -3,15 +3,16 @@
 A tool for construction managers to estimate how much flooring a room needs and what it will cost.
 Hardwood first; other flooring types later. Estimates are for budgeting.
 
-**Current status: Phase 3.** Add photos of a room and/or measure its walls; the page estimates the
-room size (with a range and a confidence level), the square footage with waste, the boxes to buy and
-the cost. See [CLAUDE.md](CLAUDE.md) for the roadmap and design decisions.
+**Current status: Phase 5.** Create a project for each house, add its rooms one by one, measure the
+walls and/or take photos, and get the square footage, boxes and cost per room plus a house total you
+can print or save as PDF. Projects are saved in the browser. See [CLAUDE.md](CLAUDE.md) for the roadmap
+and design decisions.
 
 ## How the estimate works
 
-The page has two optional wall fields, **Longer wall** and **Shorter wall**, in feet + inches or
-metres. Measure **wall to wall, not including closets** (closets are found in the photos and added
-separately, because flooring normally goes into closets).
+Each room has two optional wall fields, **Longer wall (length)** and **Shorter wall (width)**, in feet
++ inches or metres. Measure **wall to wall, not including closets** (closets are listed separately,
+because flooring normally goes into closets).
 
 | You enter | What happens | Costs an AI call? |
 |---|---|---|
@@ -27,8 +28,52 @@ separately, because flooring normally goes into closets).
 - Each dimension is marked **measured** or **estimated**. Estimated values show a range; the cost shows
   the likely amount plus a rounded range.
 - One measured wall makes photo estimates much more accurate. Both walls make them exact.
-- Not yet supported: entering closet sizes by hand. With both walls measured and no photos, closets
-  aren't counted.
+- **Closets and built-ins:** closets and built-ins (islands, vanities) found in the photos are listed on
+  the room screen. Edit a size (it becomes exact, "measured"), remove one, or **Add closet** yourself.
+  Both walls + your closets give a fully measured estimate with no photos at all.
+- Photos are shrunk in the browser before upload when possible, and are **never saved**: after a reload,
+  a room keeps its analysis and result, but you'll need to re-add photos to re-analyze.
+
+## Demo
+
+1. `npm run dev` and open http://localhost:3000 (works on a phone too; see below).
+2. Press **Load sample project**. It creates "Sample: 24 Maple Street" with 3 rooms (a bedroom with
+   one measured wall and a photo analysis, a fully measured living room with a closet, and a kitchen
+   estimated from photos with an island subtracted). It uses saved example data: **no photos, no API
+   key, no internet needed.**
+3. Open a room's result, then **Print / save as PDF** on the project screen for a one-page summary
+   (use the browser's "Save as PDF" in the print dialog).
+
+Prices in the demo are placeholders and are labelled as such.
+
+## Rebranding for a client
+
+Edit [`config/branding.json`](config/branding.json); no code changes:
+
+```json
+{
+  "appName": "Acme Floor Planner",
+  "tagline": "Flooring budgets in minutes",
+  "primaryColor": "#1d4ed8",
+  "logoPath": "/acme-logo.svg"
+}
+```
+
+- `primaryColor` is a hex colour for buttons and accents; text on it switches to black or white
+  automatically.
+- `logoPath` is a file you put in a `public/` folder at the project root (create it if needed), or
+  `null` for no logo.
+- The file is checked at startup; a typo gives a clear error naming the field. Restart `npm run dev`
+  after editing.
+
+## Resetting local data
+
+Projects live in this browser's local storage (key `flooring-estimator`), separately on each device
+and browser.
+- **In the app:** on the Projects screen, **Delete all saved data** (asks to confirm).
+- **By hand:** browser DevTools → Application → Local Storage → delete `flooring-estimator`.
+- If saved data is ever unreadable, the app starts fresh, shows a message, and keeps a copy under
+  `flooring-estimator:backup:<date>`.
 
 ## Setup
 
@@ -86,6 +131,62 @@ flags them with an `ultra_wide_lens` issue.
 Keep real customer photos in `tests/fixtures/rooms/`. That folder is gitignored and must never be
 committed.
 
+`--prompt v2|v3` picks a registered prompt version (default: `v2`).
+
+### Accuracy evaluation
+
+The eval runs the photo analyzer on test rooms with known measurements and reports how close it gets,
+how much identical runs vary, and what it costs. It calls the real API, so it costs money; there's a
+hard cap.
+
+**1. Measure the room** (tape or laser, feet):
+- the main room, **wall to wall, without closets**: the longer and the shorter dimension
+- **each closet separately**: width along the wall × depth
+- the **total floor area** that gets flooring: main room + closets − permanent built-ins
+
+**2. Add photos** (2–6, with the 1x camera; corners and doorway views) to `tests/fixtures/rooms/`. That
+folder is gitignored: photos of real homes are never committed.
+
+**3. Add the room to [`eval/rooms.json`](eval/rooms.json):**
+
+```json
+{
+  "id": "kitchen-2",
+  "description": "Kitchen with an island",
+  "photos": ["tests/fixtures/rooms/kitchen2-a.jpg", "tests/fixtures/rooms/kitchen2-b.jpg"],
+  "truth": {
+    "totalAreaSqft": 148.0,
+    "main": { "lengthFt": 14.0, "widthFt": 11.5 },
+    "closets": [{ "widthFt": 3.0, "depthFt": 2.0 }],
+    "notes": "Island 6 × 3 ft subtracted from the total."
+  },
+  "conditions": [
+    { "id": "none", "knownMeasurement": null, "valid": true },
+    { "id": "known-longest", "knownMeasurement": { "valueFt": 14.0, "which": "longest" }, "valid": true },
+    { "id": "known-shortest", "knownMeasurement": { "valueFt": 11.5, "which": "shortest" }, "valid": true }
+  ]
+}
+```
+
+Only `totalAreaSqft` is required in `truth`. If a measurement wasn't taken wall to wall without closets,
+mark that condition `"valid": false` with an `"invalidReason"`; it's skipped and listed in the report.
+
+**4. Run it:**
+
+```bash
+# See what would run and what it would cost (no API calls):
+npm run eval -- --dry-run --prompt v2,v3 --model claude-sonnet-5-5,claude-haiku-5-5 --repeats 3
+
+# Run it for real (stops before spending more than --max-cost, default $1):
+npm run eval -- --prompt v2,v3 --model claude-sonnet-5-5,claude-haiku-5-5 --repeats 3 --max-cost 1
+```
+
+Other options: `--rooms bedroom-1,kitchen-2`, `--conditions none,known-shortest`, `--help`.
+Results go to `eval/results/<timestamp>/`: `report.md` (readable) and `results.json` (raw). They
+contain no images and can be committed.
+
+**Rule:** a prompt change becomes the default only after an eval run supports it.
+
 ### API
 
 `POST /api/estimate` with `multipart/form-data`: `images` (1–6 files), optional `roomName`, optional
@@ -142,15 +243,18 @@ mistakes early.
 ## Project layout
 
 ```
-config/              catalog + settings (hand-edited JSON)
+config/              catalog, settings, branding (hand-edited JSON)
 src/lib/calc/        all estimate math (pure functions, fully tested)
 src/lib/catalog.ts   loads + validates config
 src/lib/format.ts    display rounding/formatting
 src/lib/images/      photo preprocessing (HEIC, rotation, metadata stripping, resizing, lens detection)
 src/lib/ai/          photo analysis: provider interface, Anthropic implementation, prompt, schema
-src/components/      UI components
+src/lib/estimate/    merging AI + measurements, API client
+src/lib/project/     projects/rooms model, browser storage, sample project
+src/components/      UI (screens in src/components/app/)
 src/app/             Next.js pages + API route (api/estimate)
 src/types/           shared types
 scripts/analyze.ts   command-line photo analysis
+eval/                accuracy evaluation harness
 tests/               Vitest tests (never call the real API)
 ```

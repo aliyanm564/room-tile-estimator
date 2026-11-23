@@ -6,6 +6,11 @@
 //   2026-11-23.2  v2: section labels (main/closet/other) with closets as separate sections;
 //                 knownMeasurementAppliedTo; measurement = main room only, used as a ruler for the
 //                 other dimension (never proportional rescaling); notes are tips, never questions.
+//   2026-11-23.3  v3: notes in a neutral voice (no "I"), and only suggest actions the app supports
+//                 (add/retake a photo, measure the longer or shorter wall). Otherwise identical to v2.
+//
+// Every registered version stays runnable by ID so the eval can compare them (`npm run eval`).
+// A new version becomes DEFAULT_PROMPT_ID only after an eval run supports it.
 
 import type Anthropic from "@anthropic-ai/sdk";
 import { describeLens } from "@/lib/images/lens";
@@ -14,9 +19,8 @@ import type { KnownMeasurement } from "./schema";
 
 export type { KnownMeasurement } from "./schema";
 
-export const PROMPT_VERSION = "2026-11-23.2";
-
-export const SYSTEM_PROMPT = `You measure rooms from photos for flooring budget estimates. The people using this are construction managers, not engineers. Your job is to return the room's floor dimensions as data; a separate program does all arithmetic, quantities and pricing.
+// v2 system prompt: keep this text byte-for-byte unchanged (eval comparisons depend on it).
+const SYSTEM_PROMPT_V2 = `You measure rooms from photos for flooring budget estimates. The people using this are construction managers, not engineers. Your job is to return the room's floor dimensions as data; a separate program does all arithmetic, quantities and pricing.
 
 # What you receive
 - 1 to 6 photos, each labelled "Photo N" with the camera lens it was taken with.
@@ -69,6 +73,62 @@ If the photos don't allow a sensible estimate (floor not visible, too dark, too 
 # Never
 - Never estimate prices, costs, number of boxes, planks, or material quantities. Only room data.
 - Never do the area arithmetic; just report the dimensions.`;
+
+const NOTES_RULE_V2 =
+  "- notes: up to 3 short, plain-language tips or suggestions for the user (e.g. which photo or measurement would help most). The user cannot reply to you, so never ask questions and never ask the user to tell you anything; state what you assumed instead.";
+
+const NOTES_RULE_V3 = `- notes: up to 3 short, plain-language tips for the user.
+  - Write in a neutral voice, never first person: "Assumed the mirrored door is a reach-in closet about 2 ft deep.", not "I assumed…".
+  - The user cannot reply, so never ask questions or ask the user to tell, check or confirm anything; state what was assumed instead.
+  - Only suggest actions the app supports: adding or retaking a photo (a corner view, a doorway view, using the 1x camera instead of 0.5x), or measuring the room's longer wall or shorter wall. Never suggest measuring closets, built-ins, doors, ceilings or anything else; there is nowhere to enter those.`;
+
+function replaceOnce(text: string, find: string, replacement: string): string {
+  const at = text.indexOf(find);
+  if (at === -1 || text.indexOf(find, at + 1) !== -1) {
+    throw new Error("prompt.ts: expected exactly one occurrence of the text to replace");
+  }
+  return text.slice(0, at) + replacement + text.slice(at + find.length);
+}
+
+// v3 = v2 with only the notes rule replaced (fails loudly at load if v2's rule text ever changes).
+const SYSTEM_PROMPT_V3 = replaceOnce(SYSTEM_PROMPT_V2, NOTES_RULE_V2, NOTES_RULE_V3);
+
+export const PROMPT_IDS = ["v2", "v3"] as const;
+export type PromptId = (typeof PROMPT_IDS)[number];
+
+export interface PromptDefinition {
+  id: PromptId;
+  /** Recorded in every result's meta.promptVersion. */
+  version: string;
+  system: string;
+}
+
+export const PROMPTS: Record<PromptId, PromptDefinition> = {
+  v2: { id: "v2", version: "2026-11-23.2", system: SYSTEM_PROMPT_V2 },
+  v3: { id: "v3", version: "2026-11-23.3", system: SYSTEM_PROMPT_V3 },
+};
+
+/** What the app and CLI use unless told otherwise. Change only when an eval run supports it. */
+// v3 since 2026-11-23: eval (eval/results/2026-11-23T08-38-50-351Z) showed Sonnet accuracy unchanged
+// vs v2 within run-to-run noise, and v3 notes followed the rules (v2 broke them in 6/12 runs).
+export const DEFAULT_PROMPT_ID: PromptId = "v3";
+
+/** The newest registered version string (bumped with every prompt change). */
+export const LATEST_PROMPT_VERSION = PROMPTS[PROMPT_IDS[PROMPT_IDS.length - 1]].version;
+
+/** Version / system prompt of the DEFAULT prompt. */
+export const PROMPT_VERSION = PROMPTS[DEFAULT_PROMPT_ID].version;
+export const SYSTEM_PROMPT = PROMPTS[DEFAULT_PROMPT_ID].system;
+
+export function isPromptId(s: string): s is PromptId {
+  return (PROMPT_IDS as readonly string[]).includes(s);
+}
+
+export function getPrompt(id: PromptId = DEFAULT_PROMPT_ID): PromptDefinition {
+  const p = PROMPTS[id];
+  if (!p) throw new Error(`Unknown prompt "${id}". Registered: ${PROMPT_IDS.join(", ")}`);
+  return p;
+}
 
 export interface PromptOptions {
   roomName?: string;

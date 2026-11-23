@@ -216,6 +216,8 @@ export interface AnalysisIssue {
 export interface AnalysisMeta {
   /** The model that produced the result (always the requested one; no fallbacks). */
   model: ModelId;
+  /** Registered prompt ID ("v2", "v3", …) and its version string. */
+  promptId: string;
   promptVersion: string;
   /** The known measurement this analysis was made with (from our code), or null. */
   knownMeasurement: KnownMeasurement | null;

@@ -1,0 +1,1811 @@
+{
+  "createdAt": "2026-11-23T08:38:50.351Z",
+  "config": {
+    "prompts": [
+      "v2",
+      "v3"
+    ],
+    "promptVersions": {
+      "v2": "2026-11-23.2",
+      "v3": "2026-11-23.3"
+    },
+    "models": [
+      "claude-sonnet-5-5",
+      "claude-haiku-5-5"
+    ],
+    "repeats": 3,
+    "roomIds": [
+      "bedroom-1"
+    ],
+    "conditionIds": null,
+    "maxCostUsd": 1
+  },
+  "estimatedCostUsd": 0.3968999999999998,
+  "totalCostUsd": 0.3462074999999999,
+  "aborted": false,
+  "abortReason": null,
+  "rooms": [
+    {
+      "id": "bedroom-1",
+      "description": "Small bedroom with a mirrored reach-in closet. 2 photos, iPhone 1x camera.",
+      "truth": {
+        "totalAreaSqft": 112.5,
+        "notes": "User-measured, approximate: 12.47 × 9.02 ft. The 12.47 ft length INCLUDES the reach-in closet; the 9.02 ft width does not. Main-room-only dimensions and closet size are unknown, so only total area is scored."
+      }
+    }
+  ],
+  "skippedConditions": [
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "known-longest",
+      "reason": "The 12.47 ft length includes the closet, but a known measurement must be the main room only (wall to wall, excluding closets). Re-measure without the closet to enable this condition."
+    }
+  ],
+  "groups": [
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 14.074074074074076,
+      "meanAbsErrorPct": 14.074074074074076,
+      "likelyMin": 127,
+      "likelyMax": 131,
+      "likelyStdDev": 2.3094010767585034,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 56.77776442066878,
+      "meanClosetAreaLikely": 11.666666666666666,
+      "meanCostUsd": 0.027665999999999996,
+      "totalCostUsd": 0.08299799999999999,
+      "meanDurationMs": 11005.333333333334,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 1,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 24.444444444444443,
+      "meanAbsErrorPct": 24.444444444444443,
+      "likelyMin": 138,
+      "likelyMax": 142,
+      "likelyStdDev": 2,
+      "coverageRate": 0.6666666666666666,
+      "meanRangeWidthPct": 53.566920848764084,
+      "meanClosetAreaLikely": 10,
+      "meanCostUsd": 0.002222466666666667,
+      "totalCostUsd": 0.0066674,
+      "meanDurationMs": 13826.333333333334,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 2,
+        "unsupportedAction": 1,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 13.777777777777779,
+      "meanAbsErrorPct": 13.777777777777779,
+      "likelyMin": 122,
+      "likelyMax": 132,
+      "likelyStdDev": 5.291502622129181,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 54.394796005451745,
+      "meanClosetAreaLikely": 11.333333333333334,
+      "meanCostUsd": 0.027148666666666668,
+      "totalCostUsd": 0.081446,
+      "meanDurationMs": 8951.666666666666,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 0,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 28.444444444444446,
+      "meanAbsErrorPct": 28.444444444444446,
+      "likelyMin": 136,
+      "likelyMax": 149.5,
+      "likelyStdDev": 7.399324293474371,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 58.133203905262725,
+      "meanClosetAreaLikely": 14.666666666666666,
+      "meanCostUsd": 0.0021537666666666664,
+      "totalCostUsd": 0.0064613,
+      "meanDurationMs": 13547,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 0,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 2.1042962962962974,
+      "meanAbsErrorPct": 2.5605925925926,
+      "likelyMin": 111.72999999999999,
+      "likelyMax": 116.436,
+      "likelyStdDev": 2.717010366806389,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 31.31905179933814,
+      "meanClosetAreaLikely": 9.333333333333334,
+      "meanCostUsd": 0.02243466666666667,
+      "totalCostUsd": 0.067304,
+      "meanDurationMs": 8421,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 1,
+        "unsupportedAction": 3,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 1.0933333333333242,
+      "meanAbsErrorPct": 1.5496296296296268,
+      "likelyMin": 111.72999999999999,
+      "likelyMax": 115.72999999999999,
+      "likelyStdDev": 2,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 29.041937725121016,
+      "meanClosetAreaLikely": 10,
+      "meanCostUsd": 0.0020852333333333333,
+      "totalCostUsd": 0.0062557,
+      "meanDurationMs": 13116.333333333334,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 1,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 2.220444444444436,
+      "meanAbsErrorPct": 2.220444444444436,
+      "likelyMin": 113.72999999999999,
+      "likelyMax": 116.53399999999999,
+      "likelyStdDev": 1.4210812784636926,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 31.80171846016579,
+      "meanClosetAreaLikely": 10.666666666666666,
+      "meanCostUsd": 0.029747333333333334,
+      "totalCostUsd": 0.089242,
+      "meanDurationMs": 11025.666666666666,
+      "notesTotal": 9,
+      "noteViolations": {
+        "firstPerson": 0,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    },
+    {
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "planned": 3,
+      "ok": 3,
+      "unusable": 0,
+      "failed": 0,
+      "skipped": 0,
+      "meanErrorPct": 6.8799999999999955,
+      "meanAbsErrorPct": 6.8799999999999955,
+      "likelyMin": 115.72999999999999,
+      "likelyMax": 124.75,
+      "likelyStdDev": 4.510000000000005,
+      "coverageRate": 1,
+      "meanRangeWidthPct": 31.096316628553094,
+      "meanClosetAreaLikely": 12,
+      "meanCostUsd": 0.0019443666666666666,
+      "totalCostUsd": 0.0058331,
+      "meanDurationMs": 11422.333333333334,
+      "notesTotal": 8,
+      "noteViolations": {
+        "firstPerson": 0,
+        "unsupportedAction": 0,
+        "asksUser": 0,
+        "questions": 0
+      }
+    }
+  ],
+  "runs": [
+    {
+      "index": 1,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 127,
+          "low": 101.7,
+          "high": 160.5,
+          "errorPct": 12.88888888888889,
+          "absErrorPct": 12.88888888888889,
+          "covered": true,
+          "rangeWidthPct": 46.29921259842519
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9,
+            "likely": 10,
+            "high": 11,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "The mirrored sliding doors are assumed to be a reach-in closet about 2 ft deep; its width is a guess.",
+        "A tape measurement of one wall would tighten this estimate a lot.",
+        "A photo from the doorway showing the whole floor, plus the other closet or door areas, would help."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 1107,
+      "costUsd": 0.027496,
+      "durationMs": 11790,
+      "totalMs": 13165,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 2,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 140,
+          "low": 104.25,
+          "high": 177,
+          "errorPct": 24.444444444444443,
+          "absErrorPct": 24.444444444444443,
+          "covered": true,
+          "rangeWidthPct": 51.964285714285715
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.5,
+            "likely": 11,
+            "high": 12,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 8,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "The mirrored sliding door was treated as the closet. The white hinged door in the middle of Photo 2 was left out because its contents are unclear.",
+        "Measuring one wall from corner to corner and entering it would tighten this estimate a lot.",
+        "A photo of the floor with the furniture moved aside would show more of the carpet and make the estimate more reliable."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 2729,
+      "costUsd": 0.0021858000000000003,
+      "durationMs": 13667,
+      "totalMs": 14980,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 3,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 132,
+          "low": 101.7,
+          "high": 175.25,
+          "errorPct": 17.333333333333336,
+          "absErrorPct": 17.333333333333336,
+          "covered": true,
+          "rangeWidthPct": 55.71969696969696
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9,
+            "likely": 10,
+            "high": 11.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door on the left is a reach-in closet about 2 ft deep; the other doors are treated as the room entry and not as extra floor area.",
+        "Furniture such as the bed, desk, and chair was ignored because flooring goes underneath.",
+        "Measuring the room's longer wall or adding a photo from a corner would tighten the estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 1069,
+      "costUsd": 0.027412,
+      "durationMs": 9196,
+      "totalMs": 10469,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 4,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 149.5,
+          "low": 112,
+          "high": 192.5,
+          "errorPct": 32.88888888888889,
+          "absErrorPct": 32.88888888888889,
+          "covered": true,
+          "rangeWidthPct": 53.84615384615385
+        },
+        "main": {
+          "longer": {
+            "low": 11,
+            "likely": 12.5,
+            "high": 14,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.5,
+            "likely": 11,
+            "high": 12.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 6 ft wide and 2 ft deep.",
+        "Assumed an 8 ft ceiling and an 80 in door height for scale.",
+        "Adding a photo of the far corner, or measuring the room's longer wall, would tighten this estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 2361,
+      "costUsd": 0.0020166,
+      "durationMs": 12177,
+      "totalMs": 13466,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 5,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 111.72999999999999,
+          "low": 100.11,
+          "high": 134.06,
+          "errorPct": -0.6844444444444536,
+          "absErrorPct": 0.6844444444444536,
+          "covered": true,
+          "rangeWidthPct": 30.38575136489753
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 8,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [],
+      "notes": [
+        "A photo from the doorway showing the full length of the room would tighten the length estimate.",
+        "The mirrored sliding door on the left looks like a closet; its size is assumed and not shown, so measure it if you can.",
+        "I treated the second white door in photo 2 as a closet or bathroom door and did not add its floor."
+      ],
+      "noteChecks": {
+        "firstPerson": [
+          "I treated the second white door in photo 2 as a closet or bathroom door and did not add its floor."
+        ],
+        "unsupportedAction": [
+          "The mirrored sliding door on the left looks like a closet; its size is assumed and not shown, so measure it if you can."
+        ],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 588,
+      "costUsd": 0.022408,
+      "durationMs": 10836,
+      "totalMs": 12355,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 6,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 115.72999999999999,
+          "low": 96.94999999999999,
+          "high": 134.76,
+          "errorPct": 2.871111111111102,
+          "absErrorPct": 2.871111111111102,
+          "covered": true,
+          "rangeWidthPct": 32.67087185690832
+        },
+        "main": {
+          "longer": {
+            "low": 10,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other",
+        "other"
+      ],
+      "notes": [
+        "Assumed the bed is a queen, so its size was used as a scale reference.",
+        "The white panel door in the middle of Photo 2 may be a second closet; its footprint was not included because its contents are hidden.",
+        "Measuring the room's length wall to wall with a tape would tighten the estimate the most."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 2371,
+      "costUsd": 0.0020119,
+      "durationMs": 12607,
+      "totalMs": 13951,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 7,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 116.53399999999999,
+          "low": 100.10600000000001,
+          "high": 137.26399999999998,
+          "errorPct": 3.5857777777777704,
+          "absErrorPct": 3.5857777777777704,
+          "covered": true,
+          "rangeWidthPct": 31.88597319237302
+        },
+        "main": {
+          "longer": {
+            "low": 10.3,
+            "likely": 11.7,
+            "high": 13.2,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 11,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep and about 5.5 ft wide.",
+        "Furniture, the bed and boxes were ignored since flooring goes under them.",
+        "Adding a photo from the doorway showing the full length of the room would tighten the longer dimension."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 1288,
+      "costUsd": 0.029704,
+      "durationMs": 11350,
+      "totalMs": 12649,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 8,
+      "repeat": 1,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 120.24,
+          "low": 100.71,
+          "high": 141.76999999999998,
+          "errorPct": 6.8799999999999955,
+          "absErrorPct": 6.8799999999999955,
+          "covered": true,
+          "rangeWidthPct": 34.14836992681303
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep.",
+        "Assumed the bed is a standard queen, about 5 ft wide, to judge the room's length.",
+        "A photo from the far corner of the room opposite the bed would help narrow the length estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 2314,
+      "costUsd": 0.0019982,
+      "durationMs": 12061,
+      "totalMs": 13360,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 9,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 127,
+          "low": 92.2,
+          "high": 169.5,
+          "errorPct": 12.88888888888889,
+          "absErrorPct": 12.88888888888889,
+          "covered": true,
+          "rangeWidthPct": 60.86614173228347
+        },
+        "main": {
+          "longer": {
+            "low": 10,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 8.5,
+            "likely": 10,
+            "high": 11.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [],
+      "notes": [
+        "A wall-to-wall tape measurement of the longest wall would improve this estimate a lot.",
+        "The closet size is assumed from the mirrored sliding door and a typical 2 ft depth; its inside wasn't visible.",
+        "I treated the door on the left in Photo 2 as a possible closet or bathroom and left it out; the other door is assumed to be the room entry."
+      ],
+      "noteChecks": {
+        "firstPerson": [
+          "I treated the door on the left in Photo 2 as a possible closet or bathroom and left it out; the other door is assumed to be the room entry."
+        ],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 1104,
+      "costUsd": 0.027466,
+      "durationMs": 10970,
+      "totalMs": 12288,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 10,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 138,
+          "low": 105,
+          "high": 188,
+          "errorPct": 22.666666666666664,
+          "absErrorPct": 22.666666666666664,
+          "covered": true,
+          "rangeWidthPct": 60.14492753623188
+        },
+        "main": {
+          "longer": {
+            "low": 11,
+            "likely": 12,
+            "high": 14,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9,
+            "likely": 10.5,
+            "high": 12,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [
+        "other",
+        "other"
+      ],
+      "notes": [
+        "Assumed a queen bed (60 in wide) and a standard 30 in entry door as the main scale references.",
+        "Assumed the mirrored sliding closet is about 2 ft deep and the white door alcove is part of the hallway, not this room.",
+        "A tape-measure reading of one wall, wall to wall, would make this estimate much more accurate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 2639,
+      "costUsd": 0.0021408,
+      "durationMs": 13447,
+      "totalMs": 14745,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 11,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 130,
+          "low": 100.8,
+          "high": 176.25,
+          "errorPct": 15.555555555555555,
+          "absErrorPct": 15.555555555555555,
+          "covered": true,
+          "rangeWidthPct": 58.03846153846154
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9,
+            "likely": 10,
+            "high": 11.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep and roughly 5 ft wide.",
+        "Assumed the two white panel doors are a room entry and a closet or bathroom, so only the mirrored closet was added.",
+        "Measuring the room's longer wall would tighten this estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 1107,
+      "costUsd": 0.027792,
+      "durationMs": 9456,
+      "totalMs": 10759,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 12,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 136,
+          "low": 99,
+          "high": 180.25,
+          "errorPct": 20.88888888888889,
+          "absErrorPct": 20.88888888888889,
+          "covered": true,
+          "rangeWidthPct": 59.74264705882353
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 8.5,
+            "likely": 10,
+            "high": 11.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 2,
+        "closetAreaLikely": 16,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the mirrored sliding door is a closet about 2 ft deep.",
+        "Assumed the white door in the alcove opens to a shallow closet about 2 ft deep.",
+        "A photo from the far corner of the room would help narrow the length estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 2848,
+      "costUsd": 0.0022600999999999997,
+      "durationMs": 14635,
+      "totalMs": 15919,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 13,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 116.436,
+          "low": 101.00999999999999,
+          "high": 138.01999999999998,
+          "errorPct": 3.498666666666673,
+          "absErrorPct": 3.498666666666673,
+          "covered": true,
+          "rangeWidthPct": 31.785702016558442
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.8,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "A wide photo of the full floor from the doorway would help confirm the longer dimension.",
+        "The mirrored sliding closet on the left of photo 2 is included with an assumed reach-in size; its depth and width are uncertain.",
+        "The other door in photo 2 may be a bathroom or second closet and is not counted; add it if flooring goes there."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [
+          "The other door in photo 2 may be a bathroom or second closet and is not counted; add it if flooring goes there."
+        ],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 624,
+      "costUsd": 0.022768,
+      "durationMs": 8129,
+      "totalMs": 9408,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 14,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 113.72999999999999,
+          "low": 100.71,
+          "high": 129,
+          "errorPct": 1.0933333333333244,
+          "absErrorPct": 1.0933333333333244,
+          "covered": true,
+          "rangeWidthPct": 24.87470324452652
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.5,
+            "high": 12.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "I assumed the 9.02 ft measurement is the width of the room, the side across from the bed's headboard wall.",
+        "The closet estimate is based on the sliding mirror door only; a photo fully inside the closet would tighten it.",
+        "A photo showing the full length of the room from one end would help narrow the length estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [
+          "I assumed the 9.02 ft measurement is the width of the room, the side across from the bed's headboard wall."
+        ],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 2616,
+      "costUsd": 0.0021344000000000003,
+      "durationMs": 13657,
+      "totalMs": 14947,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 15,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 113.72999999999999,
+          "low": 98.30399999999999,
+          "high": 133.51,
+          "errorPct": 1.0933333333333244,
+          "absErrorPct": 1.0933333333333244,
+          "covered": true,
+          "rangeWidthPct": 30.955772443506557
+        },
+        "main": {
+          "longer": {
+            "low": 10.2,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep.",
+        "The second white door beside the entry door was treated as another room and not included.",
+        "Measuring the room's longer wall or adding a photo from the doorway would tighten the estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 1242,
+      "costUsd": 0.029244,
+      "durationMs": 10341,
+      "totalMs": 11626,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 16,
+      "repeat": 2,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 115.72999999999999,
+          "low": 99.19999999999999,
+          "high": 132.66,
+          "errorPct": 2.871111111111102,
+          "absErrorPct": 2.871111111111102,
+          "covered": true,
+          "rangeWidthPct": 28.91212304501859
+        },
+        "main": {
+          "longer": {
+            "low": 10,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep.",
+        "Room length is estimated from the bed and door; measuring the longer wall would tighten the estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 2285,
+      "costUsd": 0.0019837,
+      "durationMs": 11679,
+      "totalMs": 12944,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 17,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 131,
+          "low": 96.45,
+          "high": 179.2,
+          "errorPct": 16.444444444444446,
+          "absErrorPct": 16.444444444444446,
+          "covered": true,
+          "rangeWidthPct": 63.1679389312977
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 14,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 8.5,
+            "likely": 10,
+            "high": 11.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 11,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding doors hide a reach-in closet about 2 ft deep; the second white door was treated as the room entry or another door, not part of this floor.",
+        "A photo from a corner looking across the full length of the room, or one tape measurement of a wall, would improve this estimate a lot.",
+        "Room is furnished; flooring under the bed and desk was included in the main area."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 1161,
+      "costUsd": 0.028036,
+      "durationMs": 10256,
+      "totalMs": 11514,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 18,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 142,
+          "low": 116,
+          "high": 185,
+          "errorPct": 26.222222222222225,
+          "absErrorPct": 26.222222222222225,
+          "covered": false,
+          "rangeWidthPct": 48.59154929577465
+        },
+        "main": {
+          "longer": {
+            "low": 11,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 10,
+            "likely": 11,
+            "high": 12.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "low",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "A measurement of one wall, such as the long wall the bed sits against, would make this estimate much more accurate.",
+        "I assumed a queen bed and 8 ft ceilings as scale references; if the bed is a full size, the room may be slightly smaller.",
+        "I did not count the white hinged door in the alcove beside the black bag as a closet; if it opens to a closet, that closet needs to be added."
+      ],
+      "noteChecks": {
+        "firstPerson": [
+          "I assumed a queen bed and 8 ft ceilings as scale references; if the bed is a full size, the room may be slightly smaller.",
+          "I did not count the white hinged door in the alcove beside the black bag as a closet; if it opens to a closet, that closet needs to be added."
+        ],
+        "unsupportedAction": [
+          "I did not count the white hinged door in the alcove beside the black bag as a closet; if it opens to a closet, that closet needs to be added."
+        ],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8213,
+      "outputTokens": 3039,
+      "costUsd": 0.0023408,
+      "durationMs": 14365,
+      "totalMs": 15653,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 19,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 122,
+          "low": 97.2,
+          "high": 157.5,
+          "errorPct": 8.444444444444445,
+          "absErrorPct": 8.444444444444445,
+          "covered": true,
+          "rangeWidthPct": 49.42622950819672
+        },
+        "main": {
+          "longer": {
+            "low": 10,
+            "likely": 11,
+            "high": 12.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9,
+            "likely": 10,
+            "high": 11,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep and roughly 6 ft wide.",
+        "Assumed the second white panel door is the room entry or another door, not extra floor area.",
+        "Measuring the room's longer wall would tighten the estimate."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 952,
+      "costUsd": 0.026242,
+      "durationMs": 8203,
+      "totalMs": 9493,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 20,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "none",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 148,
+          "low": 108.75,
+          "high": 198.75,
+          "errorPct": 31.555555555555554,
+          "absErrorPct": 31.555555555555554,
+          "covered": true,
+          "rangeWidthPct": 60.810810810810814
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 12,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.5,
+            "likely": 11,
+            "high": 12.5,
+            "source": "estimated"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 2,
+        "closetAreaLikely": 16,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the sliding mirrored door is a reach-in closet about 2 ft deep.",
+        "Assumed the white hinged door next to it is a closet about 2 ft deep.",
+        "A photo from the opposite corner, or measuring the longer wall, would narrow the range."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8361,
+      "outputTokens": 2697,
+      "costUsd": 0.0021846,
+      "durationMs": 13829,
+      "totalMs": 15116,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 21,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 116.436,
+          "low": 101.00999999999999,
+          "high": 138.01999999999998,
+          "errorPct": 3.498666666666673,
+          "absErrorPct": 3.498666666666673,
+          "covered": true,
+          "rangeWidthPct": 31.785702016558442
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.8,
+            "high": 13.5,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 10,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "The mirrored sliding doors on the left in Photo 2 are assumed to be a reach-in closet about 2 ft deep; its width is a rough guess.",
+        "The second white door in Photo 2 is assumed to be a separate closet or room entry, so it is not counted as floor area.",
+        "A photo from the doorway showing the full floor length with a tape measure or door in view would narrow the range."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [
+          "A photo from the doorway showing the full floor length with a tape measure or door in view would narrow the range."
+        ],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 560,
+      "costUsd": 0.022128,
+      "durationMs": 6298,
+      "totalMs": 7578,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 22,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v2",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.2",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 111.72999999999999,
+          "low": 99.21,
+          "high": 132.26,
+          "errorPct": -0.6844444444444536,
+          "absErrorPct": 0.6844444444444536,
+          "covered": true,
+          "rangeWidthPct": 29.58023807392822
+        },
+        "main": {
+          "longer": {
+            "low": 10.5,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 8,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other",
+        "other"
+      ],
+      "notes": [
+        "A wall-to-wall length measurement would make the room length much more accurate.",
+        "The closet is estimated as a 2 ft deep reach-in behind the mirrored sliding doors; the white door in the alcove beside the trash bag was not counted as a closet because its purpose is unclear.",
+        "The bed and desk are movable, so they were not treated as obstacles and flooring is assumed to go under them."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8264,
+      "outputTokens": 2566,
+      "costUsd": 0.0021094,
+      "durationMs": 13085,
+      "totalMs": 14366,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 23,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-sonnet-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 114.72999999999999,
+          "low": 97.39999999999999,
+          "high": 134.76,
+          "errorPct": 1.982222222222213,
+          "absErrorPct": 1.982222222222213,
+          "covered": true,
+          "rangeWidthPct": 32.5634097446178
+        },
+        "main": {
+          "longer": {
+            "low": 10,
+            "likely": 11.5,
+            "high": 13,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 11,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep and 5-6 ft wide.",
+        "The longer dimension is estimated from the bed and door sizes; measuring the longer wall would tighten the result.",
+        "A photo taken from a corner showing the full floor would improve accuracy."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 1347,
+      "costUsd": 0.030294,
+      "durationMs": 11386,
+      "totalMs": 12667,
+      "attempts": 1,
+      "status": "ok"
+    },
+    {
+      "index": 24,
+      "repeat": 3,
+      "roomId": "bedroom-1",
+      "conditionId": "known-shortest",
+      "promptId": "v3",
+      "model": "claude-haiku-5-5",
+      "truthAreaSqft": 112.5,
+      "promptVersion": "2026-11-23.3",
+      "score": {
+        "usable": true,
+        "area": {
+          "likely": 124.75,
+          "low": 107.32,
+          "high": 145.03,
+          "errorPct": 10.888888888888888,
+          "absErrorPct": 10.888888888888888,
+          "covered": true,
+          "rangeWidthPct": 30.22845691382766
+        },
+        "main": {
+          "longer": {
+            "low": 11,
+            "likely": 12.5,
+            "high": 14,
+            "source": "estimated"
+          },
+          "shorter": {
+            "low": 9.02,
+            "likely": 9.02,
+            "high": 9.02,
+            "source": "measured"
+          }
+        },
+        "mainScore": null,
+        "closetCount": 1,
+        "closetAreaLikely": 12,
+        "shape": "rectangle",
+        "mergeWarnings": []
+      },
+      "confidence": "medium",
+      "issues": [
+        "other"
+      ],
+      "notes": [
+        "Assumed the mirrored sliding door is a reach-in closet about 2 ft deep.",
+        "Length was estimated from the door and switch sizes because the long wall is not measured.",
+        "The bed and furniture are movable, so flooring was measured under them as well."
+      ],
+      "noteChecks": {
+        "firstPerson": [],
+        "unsupportedAction": [],
+        "asksUser": [],
+        "questions": []
+      },
+      "error": null,
+      "inputTokens": 8412,
+      "outputTokens": 2020,
+      "costUsd": 0.0018512000000000001,
+      "durationMs": 10527,
+      "totalMs": 11810,
+      "attempts": 1,
+      "status": "ok"
+    }
+  ]
+}

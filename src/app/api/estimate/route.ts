@@ -2,6 +2,7 @@
 //   images            1–6 files (JPEG, PNG, WebP, HEIC/HEIF)
 //   roomName          optional text
 //   knownMeasurement  optional JSON: {"valueFt": 14, "which": "longest" | "shortest" | "unknown"}
+//   lensHints         optional JSON array, one per image: {"focalLength35mm": 13, "lensModel": "…"} | null
 // Returns RoomAnalysis JSON, or { error: { code, message } } with a plain-language message.
 
 import * as z from "zod/v4";
@@ -13,6 +14,27 @@ const KnownMeasurementSchema = z.object({
   valueFt: z.number().positive().max(500),
   which: z.enum(["longest", "shortest", "unknown"]),
 });
+
+/** Optional per-photo lens info read by the browser before shrinking (aligned with `images`). */
+const LensHintsSchema = z.array(
+  z
+    .object({
+      focalLength35mm: z.number().positive().max(2000).nullable(),
+      lensModel: z.string().max(200).nullable(),
+    })
+    .nullable(),
+);
+
+function parseLensHints(value: FormDataEntryValue | null, count: number) {
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const r = LensHintsSchema.safeParse(JSON.parse(value));
+    // Hints are optional extras: if they don't line up with the photos, ignore them rather than fail.
+    return r.success && r.data.length === count ? r.data : [];
+  } catch {
+    return [];
+  }
+}
 
 const errorResponse = (code: string, message: string, status: number) =>
   Response.json({ error: { code, message } }, { status });
@@ -54,8 +76,9 @@ export async function POST(request: Request): Promise<Response> {
     const roomName = typeof roomNameRaw === "string" ? roomNameRaw.trim().slice(0, 100) : undefined;
     const knownMeasurement = parseKnownMeasurement(form.get("knownMeasurement"));
 
+    const hints = parseLensHints(form.get("lensHints"), files.length);
     const inputs: InputImage[] = await Promise.all(
-      files.map(async (f) => ({ name: f.name || "photo", bytes: new Uint8Array(await f.arrayBuffer()) })),
+      files.map(async (f, i) => ({ name: f.name || "photo", bytes: new Uint8Array(await f.arrayBuffer()), lensHint: hints[i] ?? null })),
     );
 
     const analysis = await analyzeRoomPhotos(

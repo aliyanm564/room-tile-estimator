@@ -2,6 +2,7 @@
 
 import type { FocusEvent, Ref } from "react";
 import type { LengthField, LengthPart } from "@/lib/measurement-input";
+import { selectAllOnFocus } from "@/lib/select-on-focus";
 import type { UnitSystem } from "@/types";
 
 /** True when focus is moving to somewhere outside this element (not between its own inputs). */
@@ -16,6 +17,7 @@ export default function LengthInput({
   onEdit,
   onLeave,
   inputRef,
+  selectOnFocus,
 }: {
   label: string;
   optional?: boolean;
@@ -25,6 +27,8 @@ export default function LengthInput({
   onLeave: () => void;
   /** Ref to the first box, so "Edit" buttons can focus it. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Select the whole value on focus, so typing replaces a pre-filled value instead of appending. */
+  selectOnFocus?: boolean;
 }) {
   const inputClass = "min-h-12 w-full rounded-xl px-3 text-lg ring-1 ring-stone-300";
   const box = (part: LengthPart, unitLabel: string, ariaUnit: string, placeholder: string, first: boolean) => (
@@ -36,6 +40,7 @@ export default function LengthInput({
         placeholder={placeholder}
         value={field.text[part]}
         onChange={(e) => onEdit(part, e.target.value)}
+        {...(selectOnFocus ? selectAllOnFocus : {})}
         className={inputClass}
       />
       <span className="text-base text-stone-600">{unitLabel}</span>

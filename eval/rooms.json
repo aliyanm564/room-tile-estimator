@@ -1,0 +1,23 @@
+{
+  "rooms": [
+    {
+      "id": "bedroom-1",
+      "description": "Small bedroom with a mirrored reach-in closet. 2 photos, iPhone 1x camera.",
+      "photos": ["tests/fixtures/rooms/IMG_9160.HEIC", "tests/fixtures/rooms/IMG_9161.HEIC"],
+      "truth": {
+        "totalAreaSqft": 112.5,
+        "notes": "User-measured, approximate: 12.47 × 9.02 ft. The 12.47 ft length INCLUDES the reach-in closet (mirrored sliding doors); the 9.02 ft width does not. The second white hinged door leads to ANOTHER room (bathroom), not a closet: it is not part of this floor, so an estimate that adds a second closet for it is overcounting. Main-room-only dimensions and closet size are unknown, so only total area is scored."
+      },
+      "conditions": [
+        { "id": "none", "knownMeasurement": null, "valid": true },
+        { "id": "known-shortest", "knownMeasurement": { "valueFt": 9.02, "which": "shortest" }, "valid": true },
+        {
+          "id": "known-longest",
+          "knownMeasurement": { "valueFt": 12.47, "which": "longest" },
+          "valid": false,
+          "invalidReason": "The 12.47 ft length includes the closet, but a known measurement must be the main room only (wall to wall, excluding closets). Re-measure without the closet to enable this condition."
+        }
+      ]
+    }
+  ]
+}

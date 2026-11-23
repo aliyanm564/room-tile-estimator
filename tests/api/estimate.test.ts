@@ -13,7 +13,7 @@ vi.mock("@/lib/ai", async (importOriginal) => ({
 
 const { POST } = await import("@/app/api/estimate/route");
 
-const meta = { model: "claude-sonnet-5-5" as const, promptVersion: "test", knownMeasurement: null, inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0, durationMs: 1, attempts: 1 };
+const meta = { model: "claude-sonnet-5-5" as const, promptId: "v2", promptVersion: "test", knownMeasurement: null, inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0, durationMs: 1, attempts: 1 };
 
 async function post(fields: Record<string, string | File | File[]>) {
   const form = new FormData();
@@ -48,6 +48,21 @@ describe("POST /api/estimate", () => {
     expect(images).toHaveLength(2);
     expect(images[0].mediaType).toBe("image/jpeg");
     expect(options).toEqual({ roomName: "Main bedroom", knownMeasurement: { valueFt: 14, which: "longest" } });
+  });
+
+  it("uses browser lens hints for photos shrunk without EXIF; ignores misaligned hints", async () => {
+    const { body } = await post({
+      images: [await photo("a.jpg"), await photo("b.jpg")], // no lens EXIF (as after client shrinking)
+      lensHints: JSON.stringify([{ focalLength35mm: 13, lensModel: null }, null]),
+    });
+    expect(body.photos.map((p: { lens: string }) => p.lens)).toEqual(["ultra_wide", "unknown"]);
+    expect(body.issues[0]).toMatchObject({ code: "ultra_wide_lens", photoIndex: 1 });
+
+    const misaligned = await post({ images: [await photo("a.jpg")], lensHints: JSON.stringify([null, { focalLength35mm: 13, lensModel: null }]) });
+    expect(misaligned.status).toBe(200);
+    expect(misaligned.body.photos[0].lens).toBe("unknown");
+    const garbage = await post({ images: [await photo("a.jpg")], lensHints: "not json" });
+    expect(garbage.status).toBe(200);
   });
 
   it("400 when no photos are sent", async () => {

@@ -3,6 +3,7 @@
 // a friendly message for the error code or HTTP status.
 
 import type { KnownMeasurement, RoomAnalysis } from "@/lib/ai/schema";
+import type { PreparedPhoto } from "@/lib/images/shrink-client";
 
 /** Friendly fallback for EVERY error code the server can return (a test enforces this). */
 export const API_ERROR_MESSAGES: Record<string, string> = {
@@ -55,37 +56,68 @@ export class EstimateApiError extends Error {
 /** Every call costs money, so the client gives up after this long rather than waiting forever. */
 export const CLIENT_TIMEOUT_MS = 200_000;
 
+export interface TransportOptions {
+  timeoutMs: number;
+  /** 0..1 as the request body uploads. */
+  onUploadProgress?: (fraction: number) => void;
+}
+
+/** Sends the form; resolves with the status and body text. Rejects with kind "network" | "timeout". */
+export type Transport = (url: string, form: FormData, opts: TransportOptions) => Promise<{ status: number; text: string }>;
+
+export class TransportError extends Error {
+  constructor(readonly kind: "network" | "timeout") {
+    super(kind);
+  }
+}
+
+/** XMLHttpRequest transport: unlike fetch, it reports upload progress. */
+export const xhrTransport: Transport = (url, form, { timeoutMs, onUploadProgress }) =>
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.timeout = timeoutMs;
+    if (onUploadProgress) {
+      xhr.upload.onprogress = (e) => e.lengthComputable && onUploadProgress(e.loaded / e.total);
+      xhr.upload.onload = () => onUploadProgress(1);
+    }
+    xhr.onload = () => resolve({ status: xhr.status, text: xhr.responseText });
+    xhr.onerror = () => reject(new TransportError("network"));
+    xhr.ontimeout = () => reject(new TransportError("timeout"));
+    xhr.send(form);
+  });
+
 export async function requestAnalysis(
-  photos: File[],
+  photos: PreparedPhoto[],
   knownMeasurement?: KnownMeasurement,
-  opts: { fetchImpl?: typeof fetch; timeoutMs?: number; roomName?: string } = {},
+  opts: { transport?: Transport; timeoutMs?: number; roomName?: string; onUploadProgress?: (fraction: number) => void } = {},
 ): Promise<RoomAnalysis> {
   const form = new FormData();
-  for (const p of photos) form.append("images", p, p.name);
+  for (const p of photos) form.append("images", p.file, p.name);
+  if (photos.some((p) => p.lensHint)) form.append("lensHints", JSON.stringify(photos.map((p) => p.lensHint)));
   if (knownMeasurement) form.append("knownMeasurement", JSON.stringify(knownMeasurement));
   if (opts.roomName) form.append("roomName", opts.roomName);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? CLIENT_TIMEOUT_MS);
-  let res: Response;
+  let res: { status: number; text: string };
   try {
-    res = await (opts.fetchImpl ?? fetch)("/api/estimate", { method: "POST", body: form, signal: controller.signal });
-  } catch {
-    throw controller.signal.aborted
+    res = await (opts.transport ?? xhrTransport)("/api/estimate", form, {
+      timeoutMs: opts.timeoutMs ?? CLIENT_TIMEOUT_MS,
+      onUploadProgress: opts.onUploadProgress,
+    });
+  } catch (e) {
+    throw e instanceof TransportError && e.kind === "timeout"
       ? new EstimateApiError("client_timeout", API_ERROR_MESSAGES.client_timeout)
       : new EstimateApiError("network_error", API_ERROR_MESSAGES.network_error);
-  } finally {
-    clearTimeout(timer);
   }
 
   let body: unknown = null;
   try {
-    body = await res.json();
+    body = JSON.parse(res.text);
   } catch {
     body = null; // e.g. an HTML error page from a proxy
   }
 
-  if (!res.ok) {
+  if (res.status < 200 || res.status >= 300) {
     const err = (body as { error?: { code?: unknown; message?: unknown } } | null)?.error;
     const code = typeof err?.code === "string" ? err.code : null;
     const serverMessage = typeof err?.message === "string" && err.message.trim() ? err.message : null;
